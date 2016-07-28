@@ -94,7 +94,7 @@ app.controller("MainController", function($scope, $location, $timeout, $log, $ht
     $scope.suggestionHeading = "Examples";
     $scope.statuses = []; // for Summary card
     $scope.summaries = []; // for Summary card
-    $scope.summaries.ind = []; // for lines displayed individually
+    $scope.summaries.ind = {}; // for lines displayed individually
     $scope.summaries.debug = {}; // for lines displayed only with scope.debugMode not falsey
     $scope.searchFeedback = "";
     
@@ -112,6 +112,7 @@ app.controller("MainController", function($scope, $location, $timeout, $log, $ht
         Wiki.pedia.getBestCat(State.catTried).
           then( function(bestCat) {
             State.catShowing = bestCat;
+            $scope.summaries.ind.loading = true;
             return Wiki.pedia.getList(bestCat);
           }).
           then(catSuccess, catError);
@@ -128,6 +129,7 @@ app.controller("MainController", function($scope, $location, $timeout, $log, $ht
     function catError(err) {
         $scope.searchFeedback = "Sorry, there was an error performing that search...";
         $log.debug("MainController catError(): ", err);
+        $scope.summaries.ind.loading = false;
     }
     
     function catSuccess(arrayOfTitles) {
@@ -139,6 +141,7 @@ app.controller("MainController", function($scope, $location, $timeout, $log, $ht
         if (arrayOfTitles.length == 0) {
             $scope.searchFeedback = "No results found. Please try again.";
             State.catShowing = "";
+            $scope.summaries.ind.loading = false;
         } else {
             $scope.summaries.ind.pediaCat = State.catShowing;
             if (arrayOfTitles.length > 60) {
@@ -178,6 +181,7 @@ app.controller("MainController", function($scope, $location, $timeout, $log, $ht
                 $scope.cards[index].raw = eachRawCard;
             });
         }//end the if that says we had cards to display
+        $scope.summaries.ind.loading = false;
     }
 
 

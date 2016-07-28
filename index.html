@@ -3,9 +3,10 @@
 <head>
 <base href="/">
 <title>FlashyCards</title>
+<meta name="robots" content="noindex" />
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
-<link href="./bower_components/bootstrap/dist/css/bootstrap.min.css" type="text/css" rel="stylesheet">
+<link href="./bower_components/bootstrap/dist/css/bootstrap.min.css" type="text/css" rel="stylesheet" />
 <link href="whhg-font/css/whhg.css" type="text/css" rel="stylesheet" media="all" />
 <link href="cards.css" media="screen" rel="stylesheet" type="text/css" />
 
@@ -26,15 +27,7 @@
 </head>
 
 <body ng-app="cardApp" ng-controller="IndexController">
-<!-- layout is:
------------------------------
-Header/site title - #header - ~110px
-- - - - - - - - -
 
-Main/game area - #views - the rest
-
------------------------------
--->
     <div class="container" id="header">
         <h1 class="page-header">
             <a href="index.htm">FlashyCards!</a>

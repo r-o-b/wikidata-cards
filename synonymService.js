@@ -148,6 +148,7 @@ synonymService.factory('SynonymService', function() {
     	"electronic game" : "gameboy",
     	"game" : "boardgame",
     	"chemical substance" : "flaskfull",
+        "enzyme" : "vial",
     	"academic journal" : "magazine",
     	"specialized periodical publication" : "magazine",
     	"periodical literature" : "magazine",
@@ -188,7 +189,9 @@ synonymService.factory('SynonymService', function() {
         "supercomputer": "terminal",
         "supercontinent": "map-marker",
         "continental fragment": "map-marker",
+        "highland": "mountains",
         "craton": "globe",
+        "orbit": "moonorbit",
         "rare disease": "firstaid",
         "car model": "automobile-car",
         "official state car": "automobile-car",
@@ -223,6 +226,7 @@ synonymService.factory('SynonymService', function() {
         "double reed instrument": "music",
         "idiophone": "music",
         "television film" : "tv",
+        "episode" : "tv",
         "election day": "calendar",
         "trick-taking game": "clubs",
         "high school": "student-school",
@@ -232,7 +236,8 @@ synonymService.factory('SynonymService', function() {
         "ethnic group": "groups-friends",
         "wikimedia portal": "webpage",
         "mythological serpent": "saurus",
-        "fossil taxon":"saurus"
+        "fossil taxon":"saurus",
+        "chasma":"map-marker"
     }
     
     var factory = {};
