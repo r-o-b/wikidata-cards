@@ -1,0 +1,74 @@
+﻿
+
+<div id="introArea">
+    
+    
+        <!-- 
+            Search/Control Card start 
+        -->
+        <div class="card panel panel-primary">
+            <div class="panel-heading">Search</div>
+            <div class="panel-body">
+                <form ng-submit="getCat()">
+                    <div class="input-group">
+                        <input id="catEntry" class="form-control" type="text" name="cat" ng-model="cat">
+                        <span class="input-group-btn">
+                            <input class="btn btn-default" type="submit" id="submit" value="Go!" />
+                        </span>
+                    </div><!-- /input-group -->
+                </form>
+                <span>{{searchFeedback}}<span>
+            </div>
+            
+            
+            <ul class="list-group" ng-controller="SuggestionController">
+                <li class="list-group-item">{{suggestionHeading}}:</li>
+                <a ng-repeat="sugg in suggestionList | limitTo:15 track by $index" ng-href="/index.html?q={{sugg.name | escape}}" class="list-group-item" ng-hide="sugg.name==prevTry">{{sugg.name}}<span ng-if="debugMode" class="debug"> [{{sugg.from}}]</span></a>
+            </ul>
+            
+        </div>
+        <!-- Search/Control Card end -->
+        
+        
+        <!-- 
+            Summary Card start
+        -->
+        <div class="card panel panel-success">
+            <div class="panel-heading">Summary</div>
+            <ul class="list-group">
+                <li class="list-group-item">Search for: {{summaries.ind.searchFor}}</li>
+                <li class="list-group-item" ng-show="summaries.ind.pediaCat">Cards from Wikipedia category:
+                    <a href="https://en.wikipedia.org/wiki/Category:{{summaries.ind.pediaCat}}" target="_blank">  
+                        {{summaries.ind.pediaCat}}
+                    </a>
+                </li>
+                <li ng-if="debugMode" class="list-group-item debug">Pages in Wikipedia category: {{summaries.debug.numPediaCat}}</li>
+                <li ng-if="debugMode" class="list-group-item debug">Cards before filters: {{summaries.debug.numPreFilter}}</li>
+                <li ng-if="debugMode" class="list-group-item debug">Cards with description or claims: {{summaries.debug.numWithDescOrClaims}}</li>
+                <li ng-if="debugMode" class="list-group-item debug" ng-show="summaries.ind.cardsType">Cards all have type: {{summaries.ind.cardsType}}</li>
+                <li class="list-group-item">Number of cards: {{cards.length}}</li>
+                <li ng-if="debugMode" class="list-group-item debug">Number of cards with image: {{imageSources.length}}</li>
+                <li class="list-group-item" ng-show="imageSources.length > 0">Images from:
+                    <a href="https://commons.wikimedia.org" target="_blank">  
+                        Wikimedia Commons</a>
+                        (Click each image for attribution)
+                </li>
+                <li class="list-group-item" ng-show="imageSources.length < cards.length">Icons from:
+                    <a href="http://www.webhostinghub.com/glyphs/" target="_blank">  
+                        WebHostingHub Glyphs
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <!-- Summary Card end -->
+        
+        
+        <!-- 
+            Individual Cards start
+        -->
+        <card-body ng-repeat="card in cards">
+        </card-body>
+        <!-- Individual Cards end -->
+        
+        
+</div><!-- #introArea -->

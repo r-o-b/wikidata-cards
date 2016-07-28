@@ -1,0 +1,26 @@
+{
+  "name": "flashycards",
+  "main": "cards.js",
+  "authors": [
+    "r-o-b <rbehrenswi@zoho.com>"
+  ],
+  "description": "",
+  "license": "MIT",
+  "homepage": "flashycards.net",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "^3.3.6",
+    "lodash": "^4.13.1",
+    "es5-shim": "^4.5.9",
+    "es6-shim": "^0.35.1",
+    "AngularJS": "angular-latest#^1.5.7",
+    "angular-route": "^1.5.7"
+  }
+}

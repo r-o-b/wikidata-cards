@@ -1,0 +1,138 @@
+﻿html {
+    /* I want border-box to be inherited by every relevant element on page; I think bootstrap is doing this too (using * selector)  */
+    box-sizing:border-box;
+    -moz-box-sizing:border-box;
+    margin-left:auto;
+    margin-right:auto;
+    background-color:white;
+    /* background-color: rgb(70, 68, 66);  dark grey */
+}
+body {
+    /* +2 center page; could use bootstrap & wrap whole page in div with class=container instead */
+    margin-right: auto;
+    margin-left: auto;
+}
+wiki-link {
+    /* margin-right:10px; */
+}
+.cards {
+    white-space:nowrap;
+}
+.card {
+    width:340px;
+    min-height:500px;
+    display:inline-block;
+    margin-right:15px;
+    white-space: normal; /* so that text wraps; had to do white-space:nowrap in .cards so that card divs wouldn't wrap */ 
+}
+
+.debug {
+    color: lightslategray;
+}
+
+.glyphArea {
+    color: grey;
+    font-size: 150px;
+}
+
+#catEntry {
+    /* width:200px; let Bootstrap style it */
+}
+
+#header {
+    height:20%;
+    /* +2 override bootstrap for h1, h2, h3 */
+    margin-top:0px;
+    margin-bottom:0px;
+    display:table;
+    width: 100%;
+    padding-left: 3%;
+}
+
+#header a {
+    text-decoration: none;
+    color:#08589C;
+    display: table-cell;
+    vertical-align: middle;
+}
+
+#views {
+    height:80%;
+}
+
+#controls {
+    height:20%;
+    margin-top:0px;
+    margin-bottom:0px;
+    /* +1 so .grass transition looks good */
+    background-size: auto 5%;
+    background-position:left bottom;
+}
+
+/* this element and its styling exist just so buttons can be vertically centered */
+#controlButtons {
+    display:table;
+    height:100%;
+    margin-left: 3%;
+}
+
+#controlButtons a {
+    display:table-cell;
+    vertical-align: middle;
+}
+
+#gameArea div{
+    vertical-align: middle;
+}
+
+#gameArea{
+    height:80%;
+    text-align: center;
+}
+
+#introArea div{
+    vertical-align: top;
+}
+
+#introArea{
+    height:80%;
+    margin-left: 3%;
+    word-wrap: break-word;
+}
+
+.visHidden {
+    visibility:hidden;
+}
+
+.howToPlay {
+    display:inline-block;
+}
+
+@media all and (orientation: portrait) {
+    .howToPlay {
+        width:60%; /* for vertical orientation */
+    }
+}
+
+@media all and (orientation: landscape) {
+    .howToPlay {
+        width:60%;
+    }
+}
+
+.actionButtons {
+    display:inline-block;
+}
+
+.equals {
+    display:inline-block;
+    margin-right:25px;
+    margin-left:25px;
+}
+
+/* below is from other project */
+
+/* overrides bootstrap */
+input.setting {
+    margin-left:30px;
+}

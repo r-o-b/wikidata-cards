@@ -1,0 +1,48 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<base href="/">
+<title>FlashyCards</title>
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<link href="bower_components/bootstrap/dist/css/bootstrap.min.css" type="text/css" rel="stylesheet">
+<link href="whhg-font/css/whhg.css" type="text/css" rel="stylesheet" media="all" />
+<link href="cards.css" media="screen" rel="stylesheet" type="text/css" />
+
+<script src="bower_components/es5-shim/es5-shim.min.js"></script>
+<script src="bower_components/es6-shim/es6-shim.min.js"></script>
+<script src="bower_components/angular/angular.min.js"></script>
+<script src="bower_components/angular-route/angular-route.min.js"></script>
+<script src="bower_components/lodash/dist/lodash.min.js"></script>
+<script src="lodash-find.js"></script>
+
+<script src="cards.js"></script>
+<script src="synonymService.js"></script>
+<script src="cardServices.js"></script>
+<script src="wikidataService.js"></script>
+<script src="commonsService.js"></script>
+<script src="controllers.js"></script>
+
+</head>
+
+<body ng-app="cardApp" ng-controller="IndexController">
+<!-- layout is:
+-----------------------------
+Header/site title - #header - ~110px
+- - - - - - - - -
+
+Main/game area - #views - the rest
+
+-----------------------------
+-->
+    <div class="container" id="header">
+        <h1 class="page-header">
+            <a href="index.htm">FlashyCards!</a>
+        </h1>
+    </div>
+    
+    <div ng-view id="views">
+    </div>
+    
+</body>
+</html>

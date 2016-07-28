@@ -1,0 +1,53 @@
+<div class="card panel panel-info">
+
+    <div class="panel-heading">{{card.ind.label | capFirst}}</div>
+    <div class="panel-body">
+        <card-image></card-image>
+    </div>
+    <ul class="list-group">
+        <li class="list-group-item" ng-show="card.ind.desc">Description: {{card.ind.desc}}</li>
+        <li class="list-group-item" ng-show="card.ind.aka">Also known as: {{card.ind.aka}}</li>
+        
+        <!-- 'basic'/normal properties displayed by type -->
+        <li ng-repeat="eachProp in card['wikibase-item']" class="list-group-item">
+            {{eachProp.labels | capFirst}}: <entity-list></entity-list>
+        </li>
+        <li ng-repeat="eachProp in card['quantity']" class="list-group-item">
+            {{eachProp.labels | capFirst}}: {{eachProp.value[0].amount}}
+        </li>
+        <li ng-repeat="eachProp in card['time']" class="list-group-item">
+            {{eachProp.labels | capFirst}}: 
+            <time-item></time-item>
+        </li>
+        <li ng-if="debugMode === 2" class="list-group-item debug">String:</li>
+        <li ng-repeat="eachProp in card['string']" class="list-group-item">
+            {{eachProp.labels | capFirst}}: {{eachProp.value[0]}}
+        </li>
+        <li ng-repeat="eachProp in card['monolingualtext']" class="list-group-item">
+            {{eachProp.labels | capFirst}}: {{eachProp.value[0].text}} ({{eachProp.value[0].language}})
+        </li>
+        <li ng-repeat="eachProp in card['url']" class="list-group-item">
+            {{eachProp.labels | capFirst}}: {{eachProp.value[0]}}
+        </li>
+        <li ng-repeat="eachProp in card['commonsMedia']" class="list-group-item">
+            {{eachProp.labels | capFirst}}: 
+            <commons-link file-name="{{eachProp.value[0]}}"></commons-link>
+        </li>
+        <li ng-repeat="eachProp in card['globe-coordinate']" class="list-group-item">
+            {{eachProp.labels | capFirst}}:
+            <coord-link></coord-link>
+        </li>
+        
+        <li class="list-group-item" ng-if="card.sitelinks">
+            Wikimedia Project links:
+            <display-wiki-links></display-wiki-links>
+        </li>
+        
+        <!-- displaying only for debug -->
+        <li ng-if="debugMode" ng-repeat="(dProp, dVal) in card.debug" ng-show="dVal" class="list-group-item debug">
+            {{dProp}}: {{dVal}}
+                <a href="https://www.wikidata.org/wiki/{{dVal}}" target="_blank">{{dVal | ifWdLinkable}}</a>
+        </li>
+        
+    </ul>
+</div>

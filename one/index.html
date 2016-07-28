@@ -1,0 +1,31 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base href="/">
+    <title>FlashyCards Redirect</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+</head>
+<script>
+    console.log("Card Redirect page start");
+    
+    /**
+     * @param {string}
+     * @return {string}
+     * @example
+     * convertUrl( 'http://localhost:8080/one?q=Guadalupe%20caracara' )     // => 'http://localhost:8080/#one?q=Guadalupe%20caracara'
+     * convertUrl( 'http://www.flashycards.net/one?q=Earth' )               // => 'http://www.flashycards.net/#one?q=Earth'
+     */
+    function convertUrl( startUrl ) {
+        var qStringStarts = startUrl.indexOf("?");
+        var qString = startUrl.substring(qStringStarts);
+        var domain = startUrl.substring(0, qStringStarts-4);
+        return domain + '#one' + qString;
+    }
+    
+    var href = window.location.href;
+    window.location.replace( convertUrl(href) );
+    
+</script>
+<body>
+</body>
+</html>

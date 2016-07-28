@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="http://localhost:8080/" />
+<title>specific_cards_present</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">specific_cards_present</td></tr>
+</thead><tbody>
+<tr>
+	<td>open</td>
+	<td>/</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertTitle</td>
+	<td>FlashyCards</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>link=Planets of the Solar System</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForNotText</td>
+	<td>css=span.ng-binding</td>
+	<td>Searching...</td>
+</tr>
+<tr>
+	<td>pause</td>
+	<td>2000</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyText</td>
+	<td>css=div.panel-heading.ng-binding</td>
+	<td>Earth</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//a[1]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>link=Extinct birds of North America</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForNotText</td>
+	<td>css=span.ng-binding</td>
+	<td>Searching...</td>
+</tr>
+<tr>
+	<td>verifyText</td>
+	<td>//div[@id='introArea']/card-body[24]/div/div</td>
+	<td>Passenger Pigeon</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//a[1]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>link=Carnivorous plants</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForNotText</td>
+	<td>css=span.ng-binding</td>
+	<td>Searching...</td>
+</tr>
+<tr>
+	<td>verifyText</td>
+	<td>//div[@id='introArea']/card-body[2]/div/div</td>
+	<td>Droseraceae</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//a[1]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Jasminum</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForNotText</td>
+	<td>css=span.ng-binding</td>
+	<td>Searching...</td>
+</tr>
+<tr>
+	<td>verifyText</td>
+	<td>//div[@id='introArea']/card-body[3]/div/div</td>
+	<td>Jasminum angulare</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=catEntry</td>
+	<td>Toyota vehicles</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=submit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForNotText</td>
+	<td>css=span.ng-binding</td>
+	<td>Searching...</td>
+</tr>
+<tr>
+	<td>verifyText</td>
+	<td>//div[@id='introArea']/card-body[5]/div/div</td>
+	<td>Toyota 4Runner</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=catEntry</td>
+	<td>U.S. Presidents</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=submit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForNotText</td>
+	<td>css=span.ng-binding</td>
+	<td>Searching...</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>link=Presidents of the United States</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForNotText</td>
+	<td>css=span.ng-binding</td>
+	<td>Searching...</td>
+</tr>
+<tr>
+	<td>pause</td>
+	<td>3000</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyText</td>
+	<td>css=div.panel-heading.ng-binding</td>
+	<td>Abraham Lincoln</td>
+</tr>
+</tbody></table>
+</body>
+</html>
