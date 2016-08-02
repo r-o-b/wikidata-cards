@@ -361,7 +361,8 @@ cardServices.factory('Wiki', function($log, $http, $q) {
         "WikiProject Missing", //or get a bad one for "Sleep medicine"
         "WikiProject", //like "WikiProject Colorado" for search "U.S. states"
         "Comparison of", //"Comparison of assessments" MIGHT be ok, but others I found not too good
-        "Wikipedians interested in", //or one shows up for search "U.S. Presidents"
+        "Wikipedian", //or one shows up for search "U.S. Presidents" and "Dulcimer"
+        "Set indices", //or one shows up for search "Dulcimer"
         "Articles using"]; //e.g. "Hair color" would have "Articles using Infobox character with deprecated parameters"
         function isBadStart(stringToCheck) {
             return !!dontKeepStarts.find( function(eachStart) {
@@ -380,12 +381,15 @@ cardServices.factory('Wiki', function($log, $http, $q) {
                 return stringToCheck.endsWith(eachEnd);
             });
         }
-        if ( aTitle.toLowerCase().indexOf("disambiguation") != -1 ) {
-            isOk = false;
-        } else if (isBadEnd(aTitle) || isBadStart(aTitle)) {
-            isOk = false;
+        var dontKeepContains =
+        ["disambiguation",
+        "Wikipedia sockpuppets"];
+        function isBadContains(stringToCheck) {
+            return !!dontKeepContains.find( function(eachContain) {
+                return stringToCheck.includes(eachContain);
+            });
         }
-        return isOk;
+        return !isBadEnd(aTitle) && !isBadStart(aTitle) && !isBadContains(aTitle);
     }
     
     
