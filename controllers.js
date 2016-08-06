@@ -10,24 +10,8 @@
 
 
 app.controller("SuggestionController", function($scope, $location, $timeout, $log, $http, $q, State, Wiki) {
-    $scope.suggestionHeading = "Examples";
-    var defaultSuggestions  = [
-        "Continents",
-        "Popes who abdicated",
-        "Extinct birds of North America",
-        "Planets of the Solar System",
-        "Little House books",
-        "Torah books",
-        "Carnivorous plants",
-        "Jasminum"
-    ];
-    defaultSuggestions = defaultSuggestions.map( function(eachSugg) {
-        return {
-            'name': eachSugg,
-            'from': 'default suggestion'
-        };
-    });
-    $scope.suggestionList = defaultSuggestions;
+    $scope.suggestionHeading = "";
+    $scope.suggestionList = [];
     
     //watch State.catTried, and run getSearchSuggestions when it changes
     $scope.$watch(function () { return State.catTried; },
@@ -35,8 +19,8 @@ app.controller("SuggestionController", function($scope, $location, $timeout, $lo
             if (value) {
                 getSearchSuggestions(value);
             } else {
-                $scope.suggestionHeading = "Examples";
-                $scope.suggestionList = defaultSuggestions;
+                $scope.suggestionHeading = "";
+                $scope.suggestionList = [];
             }
         }
     );
@@ -47,8 +31,8 @@ app.controller("SuggestionController", function($scope, $location, $timeout, $lo
             if (State.catTried) {
                 getSearchSuggestions(State.catTried);
             } else {
-                $scope.suggestionHeading = "Examples";
-                $scope.suggestionList = defaultSuggestions;
+                $scope.suggestionHeading = "";
+                $scope.suggestionList = [];
             }
         }
     );
@@ -79,7 +63,7 @@ app.controller("SuggestionController", function($scope, $location, $timeout, $lo
                 return Wiki.isCardSet(eachCat.name);
             });
             if (catList.length > 0) {
-                $scope.suggestionHeading = "You could try";
+                $scope.suggestionHeading = "You could try:";
                 $scope.suggestionList = catList;
             }
         }, function(err) {
@@ -108,11 +92,13 @@ app.controller("MainController", function($scope, $location, $timeout, $log, $ht
     if ( $location.search().q ) {
         State.catTried = $location.search().q;
         $scope.searchFeedback = "Searching...";
+        $scope.summaries.ind.searching = true;
         $scope.summaries.ind.searchFor = State.catTried;
         Wiki.pedia.getBestCat(State.catTried).
           then( function(bestCat) {
             State.catShowing = bestCat;
             $scope.summaries.ind.loading = true;
+            $scope.summaries.ind.searching = false;
             return Wiki.pedia.getList(bestCat);
           }).
           then(catSuccess, catError);

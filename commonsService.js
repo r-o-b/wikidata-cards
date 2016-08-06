@@ -202,7 +202,7 @@ commonsService.factory('CommonsService', function($log, $http) {
                     return eachPageObject.imageinfo[0].thumburl;
                 });
                 $log.debug("factory.getImageFromCategory(" + catName + ") success urls: ", urls);
-                var oneGoodUrl = _.find( urls, factory.isEntityImage );
+                var oneGoodUrl = _.find( urls, isEntityImage );
                 $log.debug("factory.getImageFromCategory(" + catName + ") success resolving promise with oneGoodUrl: ", oneGoodUrl);
                 if (!oneGoodUrl) {
                     return Promise.reject( new Error('no appropriate image found') );
@@ -256,7 +256,8 @@ commonsService.factory('CommonsService', function($log, $http) {
         "WIKIDATA-LOGO",
         "WIKINEWS-LOGO",
         "FILEICON-OGG",
-        "DISAMBIG"];
+        "DISAMBIG",
+        "FILEICON-OGG"]; // ideally, this would remove only exact matches
         isntOk = _.find( dontKeep, function( eachDont ){
             return aImage.indexOf(eachDont) !== -1;
         });

@@ -39,6 +39,36 @@
 <tr>
 	<td>type</td>
 	<td>id=catEntry</td>
+	<td>Dulcimer</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=submit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForNotText</td>
+	<td>css=span.ng-binding</td>
+	<td>Searching...</td>
+</tr>
+<tr>
+	<td>verifyText</td>
+	<td>//div[@id='introArea']/div[2]/ul/li[2]</td>
+	<td>Cards from Wikipedia category: Hammered dulcimer players</td>
+</tr>
+<tr>
+	<td>verifyNotText</td>
+	<td>css=div.panel</td>
+	<td>glob:*Wikipedian*</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//a[1]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=catEntry</td>
 	<td>planets of the solar system</td>
 </tr>
 <tr>
@@ -58,7 +88,7 @@
 </tr>
 <tr>
 	<td>verifyNotText</td>
-	<td>css=div.panel</td>
+	<td>css=div.panel ul</td>
 	<td>glob:*Planets of the Solar System*</td>
 </tr>
 <tr>

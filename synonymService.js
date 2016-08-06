@@ -267,7 +267,23 @@ synonymService.factory('SynonymService', function() {
         "pudding": "chef",
         "salad": "carrot",
         "snack cake": "cupcake",
-        "olympic sport event": "stadium"
+        "olympic sport event": "stadium",
+        "content management system": "indexmanager",
+        "national museum": "greekcolumn",
+        "food museum": "restaurantmenu",
+        "amusement park": "freeway",
+        "sports venue": "stadium",
+        "airport": "plane",
+        "amusement ride": "freeway",
+        "common name": "butterfly",
+        "unique identifier": "contact-businesscard",
+        "financial market": "stocks",
+        "painting series": "brush",
+        "illuminated manuscript": "book",
+        "sculpture": "greekcolumn",
+        "state of the united states": "map-marker",
+        "animated character": "mickeymouse",
+        "fictional character": "tophat"
     }
     
     var factory = {};

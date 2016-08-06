@@ -259,22 +259,42 @@ app.directive('timeItem', function() {
          * only year is significant
          * for example, Madison, Wisconsin start time (P580) of "+1856-01-01T00:00:00Z"
          * for example, Bemis Manufacturing Company inception (P571) of "+1901-00-00T00:00:00Z"
+         * for example, Statue of Zeus at Olympia (Q46239) End Time (P582) is "+0475-01-01T00:00:00Z"
          * @param {string}
          * @return {string}
          * @examples
          * gregorian9("+1856-01-01T00:00:00Z")        // => "1856"
          * gregorian9("+1901-00-00T00:00:00Z")        // => "1901"
+         * gregorian9("+0475-01-01T00:00:00Z")        // => "475"
          */
         function gregorian9(val) {
-            return val.substring(1, val.indexOf("-") );
+            var year = val.substring(1, val.indexOf("-") ); //as string
+            return parseInt(year).toString(); //remove any leading 0s
         }
         
         /**
-         * approximate year ("c." = "circa")
+         * approximate year (I've seen either starting with "c." meaning "circa" or with "s" after year)
          * for example, Pope Benedict IX (Q178799) is "+1012-01-01T00:00:00Z"
+         * for example, Statue of Zeus at Olympia (Q46239) is "-0436-01-01T00:00:00Z"
+         * @example
+         * gregorian8("+1012-01-01T00:00:00Z")      // => "c. 1012"
+         * gregorian8("-0436-01-01T00:00:00Z")      // => "c. 436 BCE"
          */
         function gregorian8(val) {
-            return  "c. " + new Date( val.substring(1, val.length-1) ).getFullYear();
+            var year = new Date( val.substring(1, val.length-1) ).getFullYear();
+            var age = val.substring(0,1) === "-" ? " BCE" : "";
+            return  "c. " + year + age;
+        }
+        
+        /**
+         * for example, "Great Pyramid of Giza", claim P571, is "-2560-00-00T00:00:00Z"
+         * @example
+         * julian9("-2560-00-00T00:00:00Z")     // => "2560 BCE"
+         */
+        function julian9(val) {
+            var year = val.substring(1, val.indexOf("-",1) );
+            var age = val.substring(0,1) === "-" ? "BCE" : "AD";
+            return year + " " + age;
         }
         
         /**
@@ -297,6 +317,7 @@ app.directive('timeItem', function() {
                 "11": gregorian11
             },
             "Q1985786": {
+                "9": julian9,
                 "11": julian11
             }
         

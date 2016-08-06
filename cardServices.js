@@ -203,6 +203,7 @@ cardServices.factory('Wiki', function($log, $http, $q) {
                 action: 'query',
                 list: 'search',
                 format: 'json',
+                srprop: '',
                 srsearch: searchTerm,
                 srnamespace: 14,
                 srlimit: 10
@@ -363,7 +364,8 @@ cardServices.factory('Wiki', function($log, $http, $q) {
         "Comparison of", //"Comparison of assessments" MIGHT be ok, but others I found not too good
         "Wikipedian", //or one shows up for search "U.S. Presidents" and "Dulcimer"
         "Set indices", //or one shows up for search "Dulcimer"
-        "Articles using"]; //e.g. "Hair color" would have "Articles using Infobox character with deprecated parameters"
+        "Articles using", //e.g. "Hair color" would have "Articles using Infobox character with deprecated parameters"
+        "Wikipedia books on"]; //e.g., "Abrahamic religions" would have "Wikipedia books on Abrahamic religions"
         function isBadStart(stringToCheck) {
             return !!dontKeepStarts.find( function(eachStart) {
                 return stringToCheck.startsWith(eachStart);
@@ -382,11 +384,13 @@ cardServices.factory('Wiki', function($log, $http, $q) {
             });
         }
         var dontKeepContains =
-        ["disambiguation",
-        "Wikipedia sockpuppets"];
+        ["disambiguation", // like "Disambiguation pages"
+        "Wikipedia sockpuppets",
+        "articles with",
+        "articles needing"];
         function isBadContains(stringToCheck) {
             return !!dontKeepContains.find( function(eachContain) {
-                return stringToCheck.includes(eachContain);
+                return stringToCheck.toUpperCase().includes(eachContain.toUpperCase());
             });
         }
         return !isBadEnd(aTitle) && !isBadStart(aTitle) && !isBadContains(aTitle);

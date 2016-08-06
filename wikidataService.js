@@ -23,6 +23,9 @@ wikidataService.factory('WD', function($log, $http, $q) {
 
     var urlBase = "https://wikidataclean.herokuapp.com/"; // "http://localhost:5000/"
 
+    //wake up API (if dyno is sleeping, this call will get it started, so the first real API call will be a little faster)
+    $http.get( urlBase );
+    
     var factory = {};
     factory.data = {}; // Wikidata -- wikidata.org/wiki/Special:ApiSandbox
     

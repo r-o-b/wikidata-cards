@@ -16,10 +16,31 @@
                 <span>{{searchFeedback}}<span>
             </div>
             
-            <ul class="list-group" ng-controller="SuggestionController">
-                <li class="list-group-item">{{suggestionHeading}}:</li>
-                <a ng-repeat="sugg in suggestionList | limitTo:15 track by $index" ng-href="/index.html?q={{sugg.name | escape}}" class="list-group-item" ng-hide="sugg.name==prevTry">{{sugg.name}}<span ng-if="debugMode" class="debug"> [{{sugg.from}}]</span></a>
-            </ul>
+            <div ng-controller="SuggestionController">
+                <ul class="list-group" ng-show="suggestionList.length">
+                    <li class="list-group-item">{{suggestionHeading}}</li>
+                    <a ng-repeat="sugg in suggestionList | limitTo:15 track by $index" ng-href="/index.html?q={{sugg.name | escape}}" class="list-group-item" ng-hide="sugg.name==prevTry">{{sugg.name}}<span ng-if="debugMode" class="debug"> [{{sugg.from}}]</span></a>
+                </ul>
+                
+                <div ng-hide="summaries.ind.searching">
+                    <ul class="list-group" ng-hide="suggestionList.length">
+                        <li class="list-group-item">Examples:</li>
+                        <a href="/index.html?q=Planets of the Solar System" class="list-group-item">Planets of the Solar System</a>
+                        <a href="/index.html?q=Carnivorous plants" class="list-group-item">Carnivorous plants</a>
+                        <a href="/index.html?q=Torah books" class="list-group-item">Torah books</a>
+                        <a href="/index.html?q=Continents" class="list-group-item">Continents</a>
+                        <a href="/index.html?q=Little House books" class="list-group-item">Little House books</a>
+                        <a href="/index.html?q=Jasminum" class="list-group-item">Jasminum</a>
+                        <a href="/index.html?q=Extinct birds of North America" class="list-group-item">Extinct birds of North America</a>
+                        <a href="/index.html?q=Apex predators" class="list-group-item">Apex predators</a>
+                        <a href="/index.html?q=Popes who abdicated" class="list-group-item">Popes who abdicated</a>
+                        <a href="/index.html?q=Seven Wonders of the Ancient World" class="list-group-item">Seven Wonders of the Ancient World</a>
+                        <a href="/index.html?q=Presidents of the United States" class="list-group-item">Presidents of the United States</a>
+                        <a href="/index.html?q=Paintings by Leonardo da Vinci" class="list-group-item">Paintings by Leonardo da Vinci</a>
+                        <a href="/index.html?q=Chess pieces" class="list-group-item">Chess pieces</a>
+                    </ul>
+                </div>
+            </div>
             
         </div>
         <!-- Search/Control Card end -->
