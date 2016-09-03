@@ -1,6 +1,9 @@
 ﻿var app = angular.module('cardApp', ['ngRoute', 'cardServices', 'wikidataService', 'commonsService', 'synonymService']);
 
-app.config(function($locationProvider, $routeProvider, $logProvider) {
+app.config(function($httpProvider, $locationProvider, $routeProvider, $logProvider) {
+    
+    $httpProvider.defaults.cache = true;
+    
     $locationProvider.html5Mode(true);
     
     $logProvider.debugEnabled(false);
@@ -246,13 +249,16 @@ app.directive('timeItem', function() {
             return new Date( val.substring(1, val.length-1) ).toLocaleDateString();
         }
         
+        
         /**
          * year and month are significant
          * for example, Pope John XVIII (Q179702) P570 is "+1009-07-01T00:00:00Z"
+         * for example, Cornelius (Q54798) P570 is "+0253-06-01T00:00:00Z"
+         * @example
+         * gregorian10("+0253-06-01T00:00:00Z")     // => "June 253"
          */
         function gregorian10(val) {
-            var d = new Date( val.substring(1, val.length-1) );
-            return d.getMonth() + "/" + d.getFullYear();
+            return julian10(val);
         }
         
         /**
@@ -263,13 +269,14 @@ app.directive('timeItem', function() {
          * @param {string}
          * @return {string}
          * @examples
-         * gregorian9("+1856-01-01T00:00:00Z")        // => "1856"
-         * gregorian9("+1901-00-00T00:00:00Z")        // => "1901"
-         * gregorian9("+0475-01-01T00:00:00Z")        // => "475"
+         * gregorian9("+1856-01-01T00:00:00Z")        // => "1856 AD"
+         * gregorian9("+1901-00-00T00:00:00Z")        // => "1901 AD"
+         * gregorian9("+0475-01-01T00:00:00Z")        // => "475 AD"
          */
         function gregorian9(val) {
             var year = val.substring(1, val.indexOf("-") ); //as string
-            return parseInt(year).toString(); //remove any leading 0s
+            var age = val.substring(0,1) === "-" ? " BCE" : " AD";
+            return parseInt(year).toString() + age; //remove any leading 0s
         }
         
         /**
@@ -287,20 +294,50 @@ app.directive('timeItem', function() {
         }
         
         /**
-         * for example, "Great Pyramid of Giza", claim P571, is "-2560-00-00T00:00:00Z"
+         * approximate year
+         * for example, Alexander IV (Q169915) has DOB "+1199-01-01T00:00:00Z"
          * @example
-         * julian9("-2560-00-00T00:00:00Z")     // => "2560 BCE"
+         * gregorian7("+1199-01-01T00:00:00Z")      // => "12. century"
+         */
+        function gregorian7(val) {
+            var year = new Date( val.substring(1, val.length-1) ).getFullYear() + 1;
+            var yearString = year.toString();
+            var approxYear = yearString.substring(0, yearString.length-2);
+            return  approxYear + ". century";
+        }
+        
+        /**
+         * for example, "Great Pyramid of Giza", claim P571, is "-2560-00-00T00:00:00Z"
+         * for example, "Adrian II" (Q173995) DOB is "+0792-00-00T00:00:00Z"
+         * @example
+         * julian9("-2560-00-00T00:00:00Z")         // => "2560 BCE"
+         * julian9("+0792-00-00T00:00:00Z")         // => "792 AD"
          */
         function julian9(val) {
-            var year = val.substring(1, val.indexOf("-",1) );
+            var yearRaw = val.substring(1, val.indexOf("-",1) );
+            var yearDisp = parseInt( yearRaw ).toString();
             var age = val.substring(0,1) === "-" ? "BCE" : "AD";
-            return year + " " + age;
+            return yearDisp + " " + age;
+        }
+        
+        /**
+         * for example, Agapetus II (Q103389), claim P570, is "+0955-12-00T00:00:00Z"
+         * @example
+         * julian10("+0955-12-00T00:00:00Z")        // => "December 955"
+         */
+        function julian10(val) {
+            var yearPart = val.substring(1, 5);
+            var yearPartNum = parseInt( yearPart );
+            var monthPartNum = parseInt( val.substring(6, 8) ) - 1;
+            var ourDate = new Date(yearPartNum, monthPartNum, 3); //day 3 to avoid timezone quirks (where midnight day 1 shows previous month name)
+            return ourDate.toLocaleDateString( "en", {month: "long", year: "numeric"} );
         }
         
         /**
          * @todo - so, yeah, this puts out 1 day early than what's on https://www.wikidata.org/wiki/Q227694
          * for example, Q227694, claim P570, is "+1417-10-27T00:00:00Z"
          * another example, Pope Celestine V (Q118081) has P570 of "+1296-05-26T00:00:00Z"
+         * example: "Alexander VI" (Q108316) DOB should be more like--err, well Wikidata indeed has "1 January 1431"
          */
         function julian11(val) {
             return new Date( val.substring(1, val.length-1) ).toLocaleDateString();
@@ -311,6 +348,7 @@ app.directive('timeItem', function() {
             "Q1985727": {
                 "2": gregorian2,
                 "3": gregorian2, //see how this looks for now before making own function
+                "7": gregorian7,
                 "8": gregorian8,
                 "9": gregorian9,
                 "10": gregorian10,
@@ -318,6 +356,7 @@ app.directive('timeItem', function() {
             },
             "Q1985786": {
                 "9": julian9,
+                "10": julian10,
                 "11": julian11
             }
         
@@ -385,12 +424,13 @@ app.directive('cardImage', function($q, $log, Wiki, WD, SynonymService, CommonsS
                     //console.log("getBestImage() eachRawCard.claims: ", eachRawCard.claims);
                     var ioLabels = ( eachRawCard.claims.P31 && eachRawCard.claims.P31.value.split(", ") ) || [];
                     var soLabels = ( eachRawCard.claims.P279 && eachRawCard.claims.P279.value.split(", ") ) || [];
-                    var ioAndSoLabels = _.union( ioLabels, soLabels);
+                    var poLabels = ( eachRawCard.claims.P361 && eachRawCard.claims.P361.value.split(", ") ) || [];
+                    var ioSoPoLabels = _.union( ioLabels, soLabels, poLabels);
                     var entityLabel = eachRawCard.labels;
-                    var allLabelsToMatch = ioAndSoLabels.push( entityLabel ); //for example, will find glyph for ?q=Address and ?q=Binary
+                    var allLabelsToMatch = ioSoPoLabels.push( entityLabel ); //for example, will find glyph for ?q=Address and ?q=Binary
                     //console.log("getBestImage() allLabelsToMatch: ", allLabelsToMatch);
                     
-                    var glyph = SynonymService.findSynOrGlyphMatch(ioAndSoLabels);
+                    var glyph = SynonymService.findSynOrGlyphMatch(ioSoPoLabels);
                     if (glyph) {
                         scope.card.show.glyph = "icon-" + glyph;
                         scope.card.debug["Image from"] = "glyph by name";

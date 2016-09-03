@@ -20,10 +20,6 @@
 
 var commonsService = angular.module('commonsService', []);
 
-commonsService.config(function($httpProvider) {
-    //$httpProvider.defaults.cache = true; //doesn't work with jsonp: github.com/angular/angular.js/issues/1947
-});
-
 commonsService.factory('CommonsService', function($log, $http) {
     $log.debug("CommonsService service start");
 
@@ -257,7 +253,9 @@ commonsService.factory('CommonsService', function($log, $http) {
         "WIKINEWS-LOGO",
         "FILEICON-OGG",
         "DISAMBIG",
-        "FILEICON-OGG"]; // ideally, this would remove only exact matches
+        "FILEICON-OGG",
+        "IUCN_3_1",
+        "-NO-IMAGE"];
         isntOk = _.find( dontKeep, function( eachDont ){
             return aImage.indexOf(eachDont) !== -1;
         });

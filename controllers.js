@@ -130,10 +130,10 @@ app.controller("MainController", function($scope, $location, $timeout, $log, $ht
             $scope.summaries.ind.loading = false;
         } else {
             $scope.summaries.ind.pediaCat = State.catShowing;
-            if (arrayOfTitles.length > 60) {
+            if (arrayOfTitles.length > 85) {
                 $scope.searchFeedback = "Too many results found. Showing first section only.";
                 $log.debug("catSuccess() arrayOfTitles: ", arrayOfTitles);
-                var getWdObjectsPromise = WD.data.getObjects( _.take(arrayOfTitles,45) );
+                var getWdObjectsPromise = WD.data.getObjects( _.take(arrayOfTitles,75) );
                 getWdObjectsPromise.then( objectsSuccess, _.logMessVar("getWdObjectsPromise.then() for > 60 titles rejected with error: ") );
             } else { // 1-60 results
                 $scope.searchFeedback = "Search complete.";
@@ -143,14 +143,30 @@ app.controller("MainController", function($scope, $location, $timeout, $log, $ht
         }
     }
     
+    
+    /**
+     * does card have enough info that we should display it?
+     * @example
+     * isCardComplete( { id: "Q2685995", type: "item", labels: "Periodic table", descriptions: "", claims: {} } )     // => false
+     * isCardComplete( { id: "Q2920462", type: "item", labels: "Whole number rule", descriptions: "", claims: { P646: { property: "P646", datatype: "external-id", labels: "Freebase ID", value: ["/m/02z9f7j"] } } } )     // => false
+     * isCardComplete( { id: "Q4925868", type: "item", labels: "Blee", descriptions: "Wikimedia disambiguation page", claims: { P31: { property: "P31", datatype: "wikibase-item", labels: "instance of", value: "Wikimedia disambiguation page" } } } )     // => false
+     * isCardComplete( { id: "Q428841", type: "item", labels: "systematic element name", descriptions: "", claims: { P279: { property: "P279", datatype: "wikibase-item", labels: "subclass of", value: "" } } } )     // => true
+     * isCardComplete( { id: "Q588507", type: "item", labels: "Goldschmidt classification", descriptions: "geochemical classification which...", claims: { P646: { property: "P646", datatype: "external-id", labels: "Freebase ID", value: ["/m/01pck6"] }, P138: { property: "P138", datatype: "wikibase-item", labels: "named after", value: "Victor Goldschmidt", $$hashKey: "object:192" } } } )     // => true
+     */
+    function isCardComplete( cardObject ) {
+        var hasDescription = cardObject.descriptions !== "";
+        var numClaims = Object.keys(cardObject.claims).length;
+        var hasClaims = numClaims !== 0 && !(numClaims === 1 && cardObject.claims.P646);
+        var isNotDisambig = cardObject.descriptions !== "Wikimedia disambiguation page";
+        return (hasDescription || hasClaims) && isNotDisambig;
+    }
+    
     //Now we have the Wikidata objects that we'll turn into our set of cards
     function objectsSuccess(wdObjects) {
         $log.debug("objectsSuccess() start with wdObjects: ", wdObjects);
         $scope.summaries.debug.numPreFilter = wdObjects.length;
         //filter out cards that don't have a description or any claims
-        wdObjects = wdObjects.filter( function(eachObject) {
-            return !( (eachObject.descriptions === "") && ( Object.keys(eachObject.claims).length === 0 ) );
-        });
+        wdObjects = wdObjects.filter( isCardComplete );
         $scope.summaries.debug.numWithDescOrClaims = wdObjects.length;
         if (wdObjects.length == 0) {
             $scope.searchFeedback = "No results found. Please try again.";

@@ -13,10 +13,6 @@
  
 var cardServices = angular.module('cardServices', []);
 
-cardServices.config(function($httpProvider) {
-    //$httpProvider.defaults.cache = true; //doesn't work with jsonp: github.com/angular/angular.js/issues/1947
-});
-
 cardServices.factory('Wiki', function($log, $http, $q) {
     $log.debug("Wiki service start");
 
@@ -246,7 +242,6 @@ cardServices.factory('Wiki', function($log, $http, $q) {
      *      ? I don't see anything designed to do this on http://en.wikipedia.org/wiki/Help:Searching
      * Call is like:
      *      http://en.wikipedia.org/wiki/Special:ApiSandbox#action=query&prop=categories&format=json&clshow=!hidden&cllimit=10&titles=Continent&redirects=
-     * Working on the cache right now...
      * @param {String} titleOfPage - Title of a Wikipedia page that we want to get. Yes, it must be a valid page title.
      * @returns {Array} Array of Wikipedia category page titles, without the "Category:" in front.
      * @example factory.pedia.getCats("Contintent") ==> ["Continents"]
@@ -365,7 +360,14 @@ cardServices.factory('Wiki', function($log, $http, $q) {
         "Wikipedian", //or one shows up for search "U.S. Presidents" and "Dulcimer"
         "Set indices", //or one shows up for search "Dulcimer"
         "Articles using", //e.g. "Hair color" would have "Articles using Infobox character with deprecated parameters"
-        "Wikipedia books on"]; //e.g., "Abrahamic religions" would have "Wikipedia books on Abrahamic religions"
+        "Wikipedia books on", //e.g., "Abrahamic religions" would have "Wikipedia books on Abrahamic religions"
+        "Wikipedia free files",
+        "Public domain files",
+        "Files with restricted",
+        "Pages with ",
+        "Pages containing ",
+        "Wikipedia requested ",
+        "Files with"] 
         function isBadStart(stringToCheck) {
             return !!dontKeepStarts.find( function(eachStart) {
                 return stringToCheck.startsWith(eachStart);
@@ -376,7 +378,10 @@ cardServices.factory('Wiki', function($log, $http, $q) {
         " articles needing attention", //like "Presidents of the U.S." would give search suggestion "U.S. Presidents articles needing attention"
         " articles needing expert attention", //like "Presidents of the U.S." would give search suggestion "U.S. Presidents articles needing expert attention"
         " stubs", //like "Flags of the United States" would give search suggestion "United States flag stubs"
-        "-related lists" //like "Flags of the United States" would give search suggestion "United States history-related lists"
+        "-related lists", //like "Flags of the United States" would give search suggestion "United States history-related lists"
+        " list errors",
+        " templates", //like "Periodic table" would give search suggestion "Periodic table templates"
+        " navigational boxes"
         ];
         function isBadEnd(stringToCheck) {
             return !!dontKeepEnds.find( function(eachEnd) {
@@ -387,7 +392,8 @@ cardServices.factory('Wiki', function($log, $http, $q) {
         ["disambiguation", // like "Disambiguation pages"
         "Wikipedia sockpuppets",
         "articles with",
-        "articles needing"];
+        "articles needing",
+        "data templates"]; // e.g., search for "U.S. state flags" would have "Country data templates of Georgia"
         function isBadContains(stringToCheck) {
             return !!dontKeepContains.find( function(eachContain) {
                 return stringToCheck.toUpperCase().includes(eachContain.toUpperCase());
