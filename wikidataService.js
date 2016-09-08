@@ -18,8 +18,9 @@ wikidataService.factory('WD', function($log, $http, $q) {
 **********************************************************/
     
     // Dev:  "http://localhost:5000/"
-    // Prod: "https://wikidataclean.herokuapp.com/"
-    var urlBase = "https://wikidataclean.herokuapp.com/";
+    // Old Prod: "https://wikidataclean.herokuapp.com/"
+    // New Prod: "https://wikidataslim.herokuapp.com/"
+    var urlBase = "https://wikidataslim.herokuapp.com/";
 
     //wake up API (this will start dyno, if it's sleeping, so first real API call will be a little faster)
     $http.get( urlBase );

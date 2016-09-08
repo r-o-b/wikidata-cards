@@ -45,6 +45,8 @@ synonymService.factory('SynonymService', function() {
     	"play" : "boardgame",
     	"tragedy" : "theather",
     	"art movement" : "palette-painting",
+        "painting": "canvas",
+        "group of paintings": "canvas",
     	"video game" : "gameboy",
     	"prison" : "lock",
     	"planet" : "planet",
@@ -333,7 +335,11 @@ synonymService.factory('SynonymService', function() {
         "film festival": "film",
         "scientific method": "dna",
         "analogy": "projectcompare",
-        "experiment": "beakeralt"
+        "experiment": "beakeralt",
+        "political party": "parthenon",
+        "primary nutritional group": "molecule",
+        "organism": "butterfly",
+        "feeding behavior": "foodtray"
     }
     
     var factory = {};
