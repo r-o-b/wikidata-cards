@@ -96,12 +96,16 @@ app.filter('commonsImageUrlToPageUrl', function() {
      * @param {string}
      * @return {string}
      * @example
-     * commonsImageUrlToFileLink( 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/Africa_satellite_orthographic.jpg/267px-Africa_satellite_orthographic.jpg' )    // => 'https://commons.wikimedia.org/wiki/File:Africa_satellite_orthographic.jpg'
-     * commonsImageUrlToFileLink( 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Bariloche-_Argentina2.jpg/300px-Bariloche-_Argentina2.jpg' )                    // => 'https://commons.wikimedia.org/wiki/File:Bariloche-_Argentina2.jpg'
+     * commonsImageUrlToFileLink( 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/Africa_satellite_orthographic.jpg/267px-Africa_satellite_orthographic.jpg' )   // => 'https://commons.wikimedia.org/wiki/File:Africa_satellite_orthographic.jpg'
+     * commonsImageUrlToFileLink( 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Bariloche-_Argentina2.jpg/300px-Bariloche-_Argentina2.jpg' )                   // => 'https://commons.wikimedia.org/wiki/File:Bariloche-_Argentina2.jpg'
+     * commonsImageUrlToFileLink( 'https://upload.wikimedia.org/wikipedia/commons/f/f8/Amplificador_de_aislamiento.png' )                                                   // => 'https://commons.wikimedia.org/wiki/File:Amplificador_de_aislamiento.png'
+     * commonsImageUrlToFileLink( 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Acheckmark.svg/274px-Acheckmark.svg.png' )                                     // => 'https://commons.wikimedia.org/wiki/File:Acheckmark.svg'
+     * commonsImageUrlToFileLink( 'https://upload.wikimedia.org/wikipedia/commons/3/30/Binette-typo.png' )                                                                  // => 'https://commons.wikimedia.org/wiki/File:Binette-typo.png'
      */
     function commonsImageUrlToFileLink( imageUrl ) {
-      var linkUrl = imageUrl.substring( imageUrl.lastIndexOf('/') );
-      linkUrl = linkUrl.substring( linkUrl.indexOf('-')+1 );
+      var linkUrl = imageUrl.substring( imageUrl.lastIndexOf('/')+1 ); // start with just file name, such as "300px-Bariloche-_Argentina2.jpg"
+      linkUrl = linkUrl.replace(/^[0-9]+px-/, ""); // remove any size info in front, such as "300px-"
+      linkUrl = linkUrl.replace(".svg.png", ".svg"); // if image type shown was different than original, as is the case with svg originals, which commons returns as png
       return 'https://commons.wikimedia.org/wiki/File:' + linkUrl;
     }
     
@@ -180,11 +184,13 @@ app.directive('coordLink', function() {
     
     function link(scope, element, attrs) {
         var propObject = scope.eachProp.value[0];
-        var lat = getCoordLat(propObject);
-        var lon = getCoordLon(propObject);
-        scope.lat = lat;
-        scope.lon = lon;
-        scope.text = "" + lat + ", " + lon;
+        if (propObject) {
+            var lat = getCoordLat(propObject);
+            var lon = getCoordLon(propObject);
+            scope.lat = lat;
+            scope.lon = lon;
+            scope.text = "" + lat + ", " + lon;
+        }
     }
     return {
         restrict: 'AE',
@@ -425,12 +431,13 @@ app.directive('cardImage', function($q, $log, Wiki, WD, SynonymService, CommonsS
                     var ioLabels = ( eachRawCard.claims.P31 && eachRawCard.claims.P31.value.split(", ") ) || [];
                     var soLabels = ( eachRawCard.claims.P279 && eachRawCard.claims.P279.value.split(", ") ) || [];
                     var poLabels = ( eachRawCard.claims.P361 && eachRawCard.claims.P361.value.split(", ") ) || [];
-                    var ioSoPoLabels = _.union( ioLabels, soLabels, poLabels);
+                    var foLabels = ( eachRawCard.claims.P1269 && eachRawCard.claims.P1269.value.split(", ") ) || [];
+                    var ioSoPoFoLabels = _.union( ioLabels, soLabels, poLabels, foLabels);
                     var entityLabel = eachRawCard.labels;
-                    var allLabelsToMatch = ioSoPoLabels.push( entityLabel ); //for example, will find glyph for ?q=Address and ?q=Binary
-                    //console.log("getBestImage() allLabelsToMatch: ", allLabelsToMatch);
+                    var allLabelsToMatch = ioSoPoFoLabels.push( entityLabel ); //for example, will find glyph for ?q=Address and ?q=Binary
+                    // console.log("getBestImage() allLabelsToMatch: ", allLabelsToMatch);
                     
-                    var glyph = SynonymService.findSynOrGlyphMatch(ioSoPoLabels);
+                    var glyph = SynonymService.findSynOrGlyphMatch(ioSoPoFoLabels);
                     if (glyph) {
                         scope.card.show.glyph = "icon-" + glyph;
                         scope.card.debug["Image from"] = "glyph by name";
