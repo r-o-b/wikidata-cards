@@ -367,7 +367,8 @@ cardServices.factory('Wiki', function($log, $http, $q) {
         "Pages with ",
         "Pages containing ",
         "Wikipedia requested ",
-        "Files with"] 
+        "Files with",
+        "X1"] 
         function isBadStart(stringToCheck) {
             return !!dontKeepStarts.find( function(eachStart) {
                 return stringToCheck.startsWith(eachStart);
