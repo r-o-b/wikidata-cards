@@ -11,6 +11,7 @@
 <thead>
 <tr><td rowspan="1" colspan="3">card_images</td></tr>
 </thead><tbody>
+<!--Check that these cards have images-->
 <tr>
 	<td>open</td>
 	<td>/one?q=Cement</td>
@@ -32,7 +33,7 @@
 	<td></td>
 </tr>
 <tr>
-	<td>verifyCssCount</td>
+	<td>verify element present</td>
 	<td>css=img</td>
 	<td>1</td>
 </tr>
@@ -52,7 +53,7 @@
 	<td></td>
 </tr>
 <tr>
-	<td>verifyCssCount</td>
+	<td>verify element present</td>
 	<td>css=img</td>
 	<td>1</td>
 </tr>
@@ -72,7 +73,7 @@
 	<td></td>
 </tr>
 <tr>
-	<td>verifyCssCount</td>
+	<td>verify element present</td>
 	<td>css=img</td>
 	<td>1</td>
 </tr>
@@ -92,7 +93,7 @@
 	<td></td>
 </tr>
 <tr>
-	<td>verifyCssCount</td>
+	<td>verify element present</td>
 	<td>css=img</td>
 	<td>1</td>
 </tr>
@@ -112,15 +113,16 @@
 	<td></td>
 </tr>
 <tr>
-	<td>verifyCssCount</td>
+	<td>verify element present</td>
 	<td>css=img</td>
 	<td>1</td>
 </tr>
 <tr>
-	<td>verifyNotHtmlSource</td>
-	<td>glob:*Disambig.svg*</td>
+	<td>verify element not present</td>
+	<td>css=img[src*="Disambig.svg"]</td>
 	<td></td>
 </tr>
+<!--Check that these cards have icons (not images)-->
 <tr>
 	<td>open</td>
 	<td>/one?q=By the Shores of Silver Lake</td>
@@ -132,12 +134,12 @@
 	<td>By the Shores of Silver Lake</td>
 </tr>
 <tr>
-	<td>verifyCssCount</td>
+	<td>verify element not present</td>
 	<td>css=img</td>
 	<td>0</td>
 </tr>
 <tr>
-	<td>verifyCssCount</td>
+	<td>verify element present</td>
 	<td>css=i.icon-bookthree</td>
 	<td>1</td>
 </tr>
@@ -152,12 +154,12 @@
 	<td>Atitlán Grebe</td>
 </tr>
 <tr>
-	<td>verifyCssCount</td>
+	<td>verify element not present</td>
 	<td>css=img</td>
 	<td>0</td>
 </tr>
 <tr>
-	<td>verifyCssCount</td>
+	<td>verify element present</td>
 	<td>css=i.icon-butterfly</td>
 	<td>1</td>
 </tr>
@@ -172,12 +174,12 @@
 	<td>Bemis Manufacturing Company</td>
 </tr>
 <tr>
-	<td>verifyCssCount</td>
+	<td>verify element not present</td>
 	<td>css=img</td>
 	<td>0</td>
 </tr>
 <tr>
-	<td>verifyCssCount</td>
+	<td>verify element present</td>
 	<td>css=i.icon-factory</td>
 	<td>1</td>
 </tr>
@@ -192,14 +194,85 @@
 	<td>St. Mary's Hospital</td>
 </tr>
 <tr>
-	<td>verifyCssCount</td>
+	<td>verify element not present</td>
 	<td>css=img</td>
 	<td>0</td>
 </tr>
 <tr>
-	<td>verifyCssCount</td>
+	<td>verify element present</td>
 	<td>css=i.icon-hospital</td>
 	<td>1</td>
+</tr>
+<tr>
+	<td>open</td>
+	<td>/one?q=Q7560691</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForText</td>
+	<td>css=div.panel-heading.ng-binding</td>
+	<td>Son of man</td>
+</tr>
+<tr>
+	<td>verify element not present</td>
+	<td>css=img</td>
+	<td>0</td>
+</tr>
+<tr>
+	<td>verify element present</td>
+	<td>css=i.icon-christiancross</td>
+	<td>1</td>
+</tr>
+<!--Check that images have links to their source at the Commons-->
+<tr>
+	<td>open</td>
+	<td>/one?q=Emoticon</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForText</td>
+	<td>css=div.panel-heading.ng-binding</td>
+	<td>Emoticon</td>
+</tr>
+<tr>
+	<td>verifyElementPresent</td>
+	<td>css=a[href*="Emoticon_Smile_Face.svg"]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>open</td>
+	<td>/one?q=Smiley</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForText</td>
+	<td>css=div.panel-heading.ng-binding</td>
+	<td>Smiley</td>
+</tr>
+<tr>
+	<td>verifyElementPresent</td>
+	<td>css=a[href*="Smiley.png"]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>open</td>
+	<td>/one?q=Check mark</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForText</td>
+	<td>css=div.panel-heading.ng-binding</td>
+	<td>Check mark</td>
+</tr>
+<tr>
+	<td>pause</td>
+	<td>2000</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyElementPresent</td>
+	<td>css=a[href*="Acheckmark.svg"]</td>
+	<td></td>
 </tr>
 </tbody></table>
 </body>
