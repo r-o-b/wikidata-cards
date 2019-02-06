@@ -257,7 +257,7 @@ cardServices.factory('Wiki', function($log, $http, $q) {
         }
         
         if (pediaGetCatsCache[titleOfPage]) {
-            $log.debug("Wiki.pedia.getCats(" + titleOfPage + ") resolving from cache with value == " + pediaGetCatsCache[titleOfPage]);
+            $log.debug("Wiki.pedia.getCats(" + titleOfPage + ") resolving from cache with value: ", pediaGetCatsCache[titleOfPage]);
             deferred.resolve(pediaGetCatsCache[titleOfPage]);
         } else {
             pediaGetCatsCache[titleOfPage] = deferred.promise;
@@ -314,11 +314,17 @@ cardServices.factory('Wiki', function($log, $http, $q) {
      * factory.pedia.getBestCat("CARNIVOROUS PLANTS")                   // promises "Carnivorous plants"
      * factory.pedia.getBestCat("US Presidents")                        // promises ""
      * factory.pedia.getBestCat("Carnivorous plant")                    // promises "Carnivorous plants"
+     * factory.pedia.getBestCat("Extinct birds of North America")       // promises "Extinct birds of North America"
      */
     factory.pedia.getBestCat = function (attemptedTitle) {
         return factory.pedia.getCatSearch(attemptedTitle).then( function(arrayOfTitles) {
             $log.debug(".pedia.getBestCat() arrayOfTitles: ", arrayOfTitles);
-            return arrayOfTitles.find( factory.isCardSet ) || "";
+            arrayOfTitles = arrayOfTitles.filter( factory.isCardSet );
+            if (arrayOfTitles.includes( attemptedTitle)) {
+                return attemptedTitle; //because for case like "Extinct birds of North America" exact match isn't 1st in array
+            } else {
+                return arrayOfTitles.find( factory.isCardSet ) || "";
+            }
         }).catch( function(err) {
             return "";
         });

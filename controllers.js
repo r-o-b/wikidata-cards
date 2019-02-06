@@ -74,7 +74,7 @@ app.controller("SuggestionController", function($scope, $location, $timeout, $lo
 });
 
 
-app.controller("MainController", function($scope, $location, $timeout, $log, $http, $q, State, Wiki, WD) {
+app.controller("MainController", function($scope, $location, $timeout, $log, $http, $q, $window, State, Wiki, WD) {
     $scope.suggestionHeading = "Examples";
     $scope.statuses = []; // for Summary card
     $scope.summaries = []; // for Summary card
@@ -104,6 +104,7 @@ app.controller("MainController", function($scope, $location, $timeout, $log, $ht
           then(catSuccess, catError);
     } else {
         State.catTried = "";
+        $window.document.title = "FlashyCards"
         $scope.searchFeedback = "";
     }
     
@@ -114,6 +115,7 @@ app.controller("MainController", function($scope, $location, $timeout, $log, $ht
     
     function catError(err) {
         $scope.searchFeedback = "Sorry, there was an error performing that search...";
+        $window.document.title = "FlashyCards"
         $log.debug("MainController catError(): ", err);
         $scope.summaries.ind.loading = false;
     }
@@ -127,9 +129,11 @@ app.controller("MainController", function($scope, $location, $timeout, $log, $ht
         if (arrayOfTitles.length == 0) {
             $scope.searchFeedback = "No results found. Please try again.";
             State.catShowing = "";
+            $window.document.title = "FlashyCards"
             $scope.summaries.ind.loading = false;
         } else {
             $scope.summaries.ind.pediaCat = State.catShowing;
+            $window.document.title = "FlashyCards | " + State.catShowing;
             if (arrayOfTitles.length > 85) {
                 $scope.searchFeedback = "Too many results found. Showing first section only.";
                 $log.debug("catSuccess() arrayOfTitles: ", arrayOfTitles);
@@ -273,7 +277,7 @@ app.controller("MainController", function($scope, $location, $timeout, $log, $ht
 }); //end MainController
 
 
-app.controller("OneController", function($scope, $location, $timeout, $log, $http, $q, State, Wiki, WD) {
+app.controller("OneController", function($scope, $location, $timeout, $log, $http, $q, $window, State, Wiki, WD) {
     $log.debug( "OneController() $location.path() == " + $location.path() + " $location.hash() == " + $location.hash() + " $location.search(): ", $location.search() );
     
     if ( $location.search().q ) {
@@ -289,6 +293,8 @@ app.controller("OneController", function($scope, $location, $timeout, $log, $htt
         //the rest of this work is now done in the cardBody directive's link() function or controller
         $scope.card = {};
         $scope.card.raw = eachRawCard;
+        $log.debug("OneController objectsSuccess() with $scope.title: ", $scope.title);
+        $window.document.title = "FlashyCards | " + $location.search().q;
     }
     
 }); //end OneController

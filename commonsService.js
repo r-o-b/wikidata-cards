@@ -125,7 +125,7 @@ commonsService.factory('CommonsService', function($log, $http) {
      * factory.getImageFromFile("fsdfsdfsdfersdfsdfsfd.jpg")         // rejects
      */
     factory.getImageFromFile = _.memoize( function (fileName) {
-        $log.debug("factory.getImageFromFile() start with fileName == " + fileName);
+        // $log.debug("factory.getImageFromFile() start with fileName == " + fileName);
         return $http({
             method: 'JSONP',
             url: 'http://commons.wikimedia.org/w/api.php',
@@ -139,7 +139,7 @@ commonsService.factory('CommonsService', function($log, $http) {
             }
         }).
         then( function(res) {
-            $log.debug("factory.getImageFromFile() $hhtp.then() with res: ", res);
+            // $log.debug("factory.getImageFromFile() $hhtp.then() with res: ", res);
             var pagesObj = _.get(res, 'data.query.pages');
             if (pagesObj[-1]) {
                 return Promise.reject( new Error('no image found') );
