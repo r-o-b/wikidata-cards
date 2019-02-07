@@ -60,10 +60,12 @@ cardServices.factory('Wiki', function($log, $http, $q) {
         
             var catTitle = "Category:" + catName;
             $http({
-                method: 'JSONP',
+                // method: 'JSONP',
+                method: 'GET',
                 url: 'https://en.wikipedia.org/w/api.php',
                 params: {
-                    callback: 'JSON_CALLBACK',
+                    // callback: 'JSON_CALLBACK',
+                    origin: '*',
                     action: 'query',
                     list: 'categorymembers',
                     format: 'json',
@@ -78,7 +80,7 @@ cardServices.factory('Wiki', function($log, $http, $q) {
                 }
                 
                 var arrayOfObjects = data.query.categorymembers;
-                $log.debug("Found category with " + arrayOfObjects.length + " pages"); //would do $scope.statuses.push if in controller
+                //$log.debug("pedia.getList Found category with " + arrayOfObjects.length + " pages"); //would do $scope.statuses.push if in controller
                 
                 var arrayOfTitles = arrayOfObjects.map( function(eachObj) {
                     return eachObj.title;
@@ -134,10 +136,12 @@ cardServices.factory('Wiki', function($log, $http, $q) {
         
         var catTitle = "Category:" + catName;
         $http({
-            method: 'JSONP',
+            // method: 'JSONP',
+            method: 'GET',
             url: 'https://en.wikipedia.org/w/api.php',
             params: {
-                callback: 'JSON_CALLBACK',
+                // callback: 'JSON_CALLBACK',
+                origin: "*",
                 action: 'query',
                 list: 'categorymembers',
                 format: 'json',
@@ -192,10 +196,12 @@ cardServices.factory('Wiki', function($log, $http, $q) {
         }
         
         $http({
-            method: 'JSONP',
+            // method: 'JSONP',
+            method: 'GET',
             url: 'https://en.wikipedia.org/w/api.php',
             params: {
-                callback: 'JSON_CALLBACK',
+                // callback: 'JSON_CALLBACK',
+                origin: '*',
                 action: 'query',
                 list: 'search',
                 format: 'json',
@@ -262,10 +268,12 @@ cardServices.factory('Wiki', function($log, $http, $q) {
         } else {
             pediaGetCatsCache[titleOfPage] = deferred.promise;
             $http({
-                method: 'JSONP',
+                // method: 'JSONP',
+                method: 'GET',
                 url: 'https://en.wikipedia.org/w/api.php',
                 params: {
-                    callback: 'JSON_CALLBACK',
+                    // callback: 'JSON_CALLBACK',
+                    origin: '*',
                     action: 'query',
                     prop: 'categories',
                     format: 'json',

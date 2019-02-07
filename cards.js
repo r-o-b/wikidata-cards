@@ -6,7 +6,7 @@ app.config(function($httpProvider, $locationProvider, $routeProvider, $logProvid
     
     $locationProvider.html5Mode(true);
     
-    $logProvider.debugEnabled(true);
+    $logProvider.debugEnabled(false);
     
     $routeProvider
         .when('/',

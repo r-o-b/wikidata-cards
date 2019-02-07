@@ -80,10 +80,12 @@ commonsService.factory('CommonsService', function($log, $http) {
     factory.getImageFromTitle = _.memoize( function (commonsTitle) {
         $log.debug("factory.getImageFromTitle("+commonsTitle+") start");
         return $http({
-            method: 'JSONP',
+            // method: 'JSONP',
+            method: 'GET',
             url: 'http://commons.wikimedia.org/w/api.php',
             params: {
-                callback: 'JSON_CALLBACK',
+                // callback: 'JSON_CALLBACK',
+                origin: '*',
                 action: 'query',
                 format: 'json',
                 titles: commonsTitle,
@@ -127,10 +129,12 @@ commonsService.factory('CommonsService', function($log, $http) {
     factory.getImageFromFile = _.memoize( function (fileName) {
         // $log.debug("factory.getImageFromFile() start with fileName == " + fileName);
         return $http({
-            method: 'JSONP',
+            // method: 'JSONP',
+            method: 'GET',
             url: 'http://commons.wikimedia.org/w/api.php',
             params: {
-                callback: 'JSON_CALLBACK',
+                // callback: 'JSON_CALLBACK',
+                origin: '*',
                 action: 'query',
                 format: 'json',
                 titles: "File:"+fileName,
@@ -173,10 +177,12 @@ commonsService.factory('CommonsService', function($log, $http) {
         $log.debug("Wiki.getImageFromCategory( " + incomingCatName + " ) start");
         var catName = incomingCatName.startsWith('Category:') ? incomingCatName.substring(9) : incomingCatName; //make sure does NOT included 'Category:' at start (because we'll add it later anyway)
         return $http({
-            method: 'JSONP',
+            // method: 'JSONP',
+            method: 'GET',
             url: 'http://commons.wikimedia.org/w/api.php',
             params: {
-                callback: 'JSON_CALLBACK',
+                // callback: 'JSON_CALLBACK',
+                origin: '*',
                 action: 'query',
                 format: 'json',
                 prop: 'imageinfo',
