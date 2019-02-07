@@ -175,7 +175,9 @@ app.controller("MainController", function($scope, $location, $timeout, $log, $ht
         if (wdObjects.length == 0) {
             $scope.searchFeedback = "No results found. Please try again.";
         } else { //if any cards to display (wdObjects.length > 0)
-            var filterObj = _.findFirstFuncName( [ filterCardsPo, filterCardsIo, filterCardsSo ], [wdObjects] );
+            var filterCardsIoLow = filterCardsIo.bind(null, .5);
+            var filterCardsIoHigh = filterCardsIo.bind(null, .9);
+            var filterObj = _.findFirstFuncName( [ filterCardsPartSeries, filterCardsIoHigh, filterCardsPo, filterCardsIoLow, filterCardsSo ], [wdObjects] );
             $log.debug("objectsSuccess() filterObj: ", filterObj);
             var filteredCards = filterObj.result || wdObjects;
             $scope.summaries.ind.cardsType = filterObj.func || "none";
@@ -194,23 +196,25 @@ app.controller("MainController", function($scope, $location, $timeout, $log, $ht
     /**
      * @private
      * Property "P31" is "instance of"
+     * @param {number} minMatch - what portion of cards need to have that property matching?
      * @param {Array} wdObjects - Array of card objects.
      * @returns {Array} Array of filtered card objects, or undefined if it doesn't think it's a good filter for the set
      **/
-    function filterCardsIo(wdObjects) {
+    function filterCardsIo(minMatch, wdObjects) {
         var ios = _(wdObjects).map( function(eachObj) {
             return WD.data.getClaimValues( eachObj, 'P31' );
         }).flatten().compact().value();
 
         $log.debug("filterCardsIo() ios: ", ios);
         ios.sort();
-        if ( _.findRatioWithProp(wdObjects, 'claims.P31') > .5 ) { //i.e, if more than half have an "instance of"
-            var filterVal = _.findMode(ios);
-            $log.debug("filterCardsIo() filterVal == " + filterVal);
-            var keeperCards = _.filter(wdObjects, function(eachObject) {
-                var p31Value = _.get(eachObject, 'claims.P31.value') || "";
-                return p31Value.indexOf(filterVal) !== -1;
-            });
+        // if ( _.findRatioWithProp(wdObjects, 'claims.P31') > minMatch ) { //i.e, if it seems like there's enough "instance of" data
+        var filterVal = _.findMode(ios);
+        $log.debug("filterCardsIo() filterVal == " + filterVal);
+        var keeperCards = _.filter(wdObjects, function(eachObject) {
+            var p31Value = _.get(eachObject, 'claims.P31.value') || "";
+            return p31Value.indexOf(filterVal) !== -1;
+        });
+        if (keeperCards.length / wdObjects.length > minMatch) {
             return keeperCards;
         } else { //otherwise, say No thanks, this filter doesn't apply
             return undefined;
@@ -250,7 +254,33 @@ app.controller("MainController", function($scope, $location, $timeout, $log, $ht
 
     /**
      * @private
-     * Property "P279" is "subclass of"
+     * Property "P179" is "part of series"
+     * Examples of card sets this catches: "Torah books"
+     * @param {Array} wdObjects - Array of card objects.
+     * @returns {Array} Array of card filtered card objects, or undefined if it doesn't think it's a good filter
+     **/
+    function filterCardsPartSeries(wdObjects) {
+        var partSeriesVals = _(wdObjects).map( function(eachObj) {
+            return WD.data.getClaimValues( eachObj, 'P179' );
+        }).flatten().compact().value();
+        partSeriesVals.sort();
+        $log.debug("filterCardsPartSeries() partSeriesVals: ", partSeriesVals);
+        if ( partSeriesVals.length > (.69 * wdObjects.length) ) { //i.e, if more than that portion of cards have a "part of series"; can't go higher for "Little House books"
+            var filterVal = _.findMode(partSeriesVals);
+            $log.debug("filterCardsPartSeries() filterVal == " + filterVal);
+            var keeperCards = _.filter(wdObjects, function(eachObject) {
+                var p179Value = _.get(eachObject, 'claims.P179.value') || "";
+                return p179Value.indexOf(filterVal) !== -1;
+            });
+            return keeperCards;
+        } else { //otherwise, say No thanks, this filter doesn't apply
+            return undefined;
+        }
+    }
+    
+    /**
+     * @private
+     * Property "361" is "part of"
      * Examples of card sets this catches: "Types of planets", "Toyota vehicles"
      * @param {Array} wdObjects - Array of card objects.
      * @returns {Array} Array of card filtered card objects, or undefined if it doesn't think it's a good filter
