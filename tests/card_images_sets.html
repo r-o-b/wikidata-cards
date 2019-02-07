@@ -32,17 +32,12 @@
 	<td>Searching...</td>
 </tr>
 <tr>
-	<td>verifyCssCount</td>
-	<td>css=img</td>
-	<td>0</td>
-</tr>
-<tr>
-	<td>verifyCssCount</td>
+	<td>verify element present</td>
 	<td>css=i.icon-restaurantmenu</td>
 	<td>1</td>
 </tr>
 <tr>
-	<td>verifyCssCount</td>
+	<td>verify element present</td>
 	<td>css=i.icon-puzzle-plugin</td>
 	<td>0</td>
 </tr>
@@ -58,7 +53,7 @@
 </tr>
 <tr>
 	<td>click</td>
-	<td>link=Planets of the Solar System</td>
+	<td>linkText=Planets of the Solar System</td>
 	<td></td>
 </tr>
 <tr>
@@ -78,22 +73,27 @@
 </tr>
 <tr>
 	<td>verifyText</td>
-	<td>//div[@id='introArea']/div[2]/ul/li[4]</td>
+	<td>xpath=//div[@id='introArea']/div[2]/ul/li[4]</td>
 	<td>Images from: Wikimedia Commons (Click each image for attribution)</td>
 </tr>
 <tr>
-	<td>verifyCssCount</td>
-	<td>css=img</td>
+	<td>storeXpathCount</td>
+	<td>xpath=//img</td>
+	<td>numImg</td>
+</tr>
+<tr>
+	<td>assert</td>
+	<td>numImg</td>
 	<td>8</td>
 </tr>
 <tr>
 	<td>click</td>
-	<td>//a[1]</td>
+	<td>xpath=//a[1]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>click</td>
-	<td>link=Continents</td>
+	<td>linkText=Continents</td>
 	<td></td>
 </tr>
 <tr>
@@ -113,22 +113,27 @@
 </tr>
 <tr>
 	<td>verifyText</td>
-	<td>//div[@id='introArea']/div[2]/ul/li[4]</td>
+	<td>xpath=//div[@id='introArea']/div[2]/ul/li[4]</td>
 	<td>Images from: Wikimedia Commons (Click each image for attribution)</td>
 </tr>
 <tr>
-	<td>verifyCssCount</td>
-	<td>css=img</td>
+	<td>storeXpathCount</td>
+	<td>xpath=//img</td>
+	<td>numImg</td>
+</tr>
+<tr>
+	<td>assert</td>
+	<td>numImg</td>
 	<td>7</td>
 </tr>
 <tr>
 	<td>click</td>
-	<td>//a[1]</td>
+	<td>xpath=//a[1]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>click</td>
-	<td>link=Torah books</td>
+	<td>linkText=Torah books</td>
 	<td></td>
 </tr>
 <tr>
@@ -143,22 +148,27 @@
 </tr>
 <tr>
 	<td>verifyText</td>
-	<td>//div[@id='introArea']/div[2]/ul/li[4]</td>
+	<td>xpath=//div[@id='introArea']/div[2]/ul/li[4]</td>
 	<td>Images from: Wikimedia Commons (Click each image for attribution)</td>
 </tr>
 <tr>
-	<td>verifyCssCount</td>
-	<td>css=img</td>
+	<td>storeXpathCount</td>
+	<td>xpath=//img</td>
+	<td>numImg</td>
+</tr>
+<tr>
+	<td>assert</td>
+	<td>numImg</td>
 	<td>5</td>
 </tr>
 <tr>
 	<td>click</td>
-	<td>//a[1]</td>
+	<td>xpath=//a[1]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>click</td>
-	<td>link=Popes who abdicated</td>
+	<td>linkText=Popes who abdicated</td>
 	<td></td>
 </tr>
 <tr>
@@ -173,22 +183,27 @@
 </tr>
 <tr>
 	<td>verifyText</td>
-	<td>//div[@id='introArea']/div[2]/ul/li[4]</td>
+	<td>xpath=//div[@id='introArea']/div[2]/ul/li[4]</td>
 	<td>Images from: Wikimedia Commons (Click each image for attribution)</td>
 </tr>
 <tr>
-	<td>verifyCssCount</td>
-	<td>css=img</td>
+	<td>storeXpathCount</td>
+	<td>xpath=//img</td>
+	<td>numImg</td>
+</tr>
+<tr>
+	<td>assert</td>
+	<td>numImg</td>
 	<td>7</td>
 </tr>
 <tr>
 	<td>click</td>
-	<td>//a[1]</td>
+	<td>xpath=//a[1]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>click</td>
-	<td>link=Little House books</td>
+	<td>linkText=Little House books</td>
 	<td></td>
 </tr>
 <tr>
@@ -203,13 +218,18 @@
 </tr>
 <tr>
 	<td>verifyText</td>
-	<td>//div[@id='introArea']/div[2]/ul/li[5]</td>
+	<td>xpath=//div[@id='introArea']/div[2]/ul/li[5]</td>
 	<td>Icons from: WebHostingHub Glyphs</td>
 </tr>
 <tr>
-	<td>verifyCssCount</td>
-	<td>css=img</td>
-	<td>1</td>
+	<td>storeXpathCount</td>
+	<td>xpath=//img</td>
+	<td>numImg</td>
+</tr>
+<tr>
+	<td>assert</td>
+	<td>numImg</td>
+	<td>0</td>
 </tr>
 <tr>
 	<td>type</td>
@@ -238,17 +258,22 @@
 </tr>
 <tr>
 	<td>verifyText</td>
-	<td>//div[@id='introArea']/div[2]/ul/li[4]</td>
+	<td>xpath=//div[@id='introArea']/div[2]/ul/li[4]</td>
 	<td>Images from: Wikimedia Commons (Click each image for attribution)</td>
 </tr>
 <tr>
 	<td>verifyText</td>
-	<td>//div[@id='introArea']/div[2]/ul/li[5]</td>
+	<td>xpath=//div[@id='introArea']/div[2]/ul/li[5]</td>
 	<td>Icons from: WebHostingHub Glyphs</td>
 </tr>
 <tr>
-	<td>verifyCssCount</td>
-	<td>css=img</td>
+	<td>storeXpathCount</td>
+	<td>xpath=//img</td>
+	<td>numImg</td>
+</tr>
+<tr>
+	<td>assert</td>
+	<td>numImg</td>
 	<td>50</td>
 </tr>
 <tr>
@@ -268,17 +293,22 @@
 </tr>
 <tr>
 	<td>verifyNotVisible</td>
-	<td>//div[@id='introArea']/div[2]/ul/li[4]</td>
+	<td>xpath=//div[@id='introArea']/div[2]/ul/li[4]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>verifyNotVisible</td>
-	<td>//div[@id='introArea']/div[2]/ul/li[5]</td>
+	<td>xpath=//div[@id='introArea']/div[2]/ul/li[5]</td>
 	<td></td>
 </tr>
 <tr>
-	<td>verifyCssCount</td>
-	<td>css=img</td>
+	<td>storeXpathCount</td>
+	<td>xpath=//img</td>
+	<td>numImg</td>
+</tr>
+<tr>
+	<td>assert</td>
+	<td>numImg</td>
 	<td>0</td>
 </tr>
 </tbody></table>
