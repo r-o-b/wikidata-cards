@@ -3,20 +3,30 @@
 @description
 
 # AngularJS API Docs
-Welcome to the AngularJS API docs page. These pages contain the AngularJS reference materials for version <strong ng-bind="version"></strong>.
+
+<div class="alert alert-warning">
+**On July 1, 2018 AngularJS entered a 3 year Long Term Support period:** [Find out more](misc/version-support-status).
+</div>
+
+## Welcome to the AngularJS API docs page.
+
+These pages contain the AngularJS reference materials for version <strong ng-bind="version"></strong>.
+
 
 The documentation is organized into **{@link guide/module modules}** which contain various components of an AngularJS application.
 These components are {@link guide/directive directives}, {@link guide/services services}, {@link guide/filter filters}, {@link guide/providers providers}, {@link guide/templates templates}, global APIs, and testing mocks.
 
+There is also a {@link guide/index guide} with articles on various topics, and a list of external resources.
+
 <div class="alert alert-info">
-**Angular Prefixes `$` and `$$`**:
+**AngularJS Prefixes `$` and `$$`**:
 
 To prevent accidental name collisions with your code,
-Angular prefixes names of public objects with `$` and names of private objects with `$$`.
+AngularJS prefixes names of public objects with `$` and names of private objects with `$$`.
 Please do not use the `$` or `$$` prefix in your code.
 </div>
 
-## Angular Modules
+## AngularJS Modules
 
 
 ## {@link ng ng (core module)}
@@ -81,7 +91,7 @@ This module is provided by default and contains the core components of AngularJS
     </td>
     <td>
       <p>
-        The core global API functions are attached to the angular object. These core functions are useful for low level JavaScript operations within your application.
+        The core global API functions are attached to the `angular` object. These core functions are useful for low level JavaScript operations within your application.
       </p>
       <p>
         Some examples include:
@@ -128,7 +138,7 @@ Use ngRoute to enable URL routing to your application. The ngRoute module suppor
 
 ## {@link ngAnimate ngAnimate}
 
-Use ngAnimate to enable animation features within your application. Various core ng directives will provide
+Use ngAnimate to enable animation features within your application. Various core AngularJS directives will provide
 animation hooks into your application when ngAnimate is included. Animations are defined by using CSS transitions/animations
 or JavaScript callbacks.
 
@@ -212,11 +222,7 @@ Use the ngCookies module to handle cookie management within your application.
       {@link ngCookies#service Services / Factories}
     </td>
     <td>
-      The following services are used for cookie management:
-      <ul>
-        <li>The {@link ngCookies.$cookies $cookie} service is a convenient wrapper to store simple data within browser cookies.</li>
-        <li>{@link ngCookies.$cookieStore $cookieStore} is used to store more complex data using serialization.</li>
-      </ul>
+      The {@link ngCookies.$cookies $cookies} service is a convenient wrapper to store simple data within browser cookies.
     </td>
   </tr>
 </table>

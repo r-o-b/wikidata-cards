@@ -19,11 +19,10 @@ describe('HTML', function() {
 
   describe('htmlParser', function() {
     /* global htmlParser */
-    if (angular.isUndefined(window.htmlParser)) return;
 
     var handler, start, text, comment;
     beforeEach(function() {
-      text = "";
+      text = '';
       start = null;
       handler = {
         start: function(tag, attrs) {
@@ -50,6 +49,8 @@ describe('HTML', function() {
           comment = comment_;
         }
       };
+      // Trigger the $sanitizer provider to execute, which initializes the `htmlParser` function.
+      inject(function($sanitize) {});
     });
 
     it('should not parse comments', function() {
@@ -129,6 +130,17 @@ describe('HTML', function() {
 
   it('should remove attrs', function() {
     expectHTML('a<div style="abc">b</div>c').toEqual('a<div>b</div>c');
+  });
+
+  it('should handle large datasets', function() {
+    // Large is non-trivial to quantify, but handling ~100,000 should be sufficient for most purposes.
+    var largeNumber = 17; // 2^17 = 131,072
+    var result = '<div>b</div>';
+    // Ideally we would use repeat, but that isn't supported in IE.
+    for (var i = 0; i < largeNumber; i++) {
+      result += result;
+    }
+    expectHTML('a' + result + 'c').toEqual('a' + result + 'c');
   });
 
   it('should remove style', function() {
@@ -225,24 +237,113 @@ describe('HTML', function() {
       .toEqual('');
   });
 
-  if (isChrome) {
-    it('should prevent mXSS attacks', function() {
-      expectHTML('<a href="&#x3000;javascript:alert(1)">CLICKME</a>').toBe('<a>CLICKME</a>');
-    });
-  }
+  it('should prevent mXSS attacks', function() {
+    expectHTML('<a href="&#x3000;javascript:alert(1)">CLICKME</a>').toBe('<a>CLICKME</a>');
+  });
 
   it('should strip html comments', function() {
     expectHTML('<!-- comment 1 --><p>text1<!-- comment 2 -->text2</p><!-- comment 3 -->')
       .toEqual('<p>text1text2</p>');
   });
 
+  describe('clobbered elements', function() {
+
+    it('should throw on a form with an input named "parentNode"', function() {
+      inject(function($sanitize) {
+
+        expect(function() {
+          $sanitize('<form><input name="parentNode" /></form>');
+        }).toThrowMinErr('$sanitize', 'elclob');
+
+        expect(function() {
+          $sanitize('<form><div><div><input name="parentNode" /></div></div></form>');
+        }).toThrowMinErr('$sanitize', 'elclob');
+      });
+    });
+
+    if (!/Edge\/\d{2,}/.test(window.navigator.userAgent)) {
+      // Skip test on Edge due to a browser bug.
+      it('should throw on a form with an input named "nextSibling"', function() {
+        inject(function($sanitize) {
+
+          expect(function() {
+            $sanitize('<form><input name="nextSibling" /></form>');
+          }).toThrowMinErr('$sanitize', 'elclob');
+
+          expect(function() {
+            $sanitize('<form><div><div><input name="nextSibling" /></div></div></form>');
+          }).toThrowMinErr('$sanitize', 'elclob');
+
+        });
+      });
+    }
+  });
+
+  // See https://github.com/cure53/DOMPurify/blob/a992d3a75031cb8bb032e5ea8399ba972bdf9a65/src/purify.js#L439-L449
+  it('should not allow JavaScript execution when creating inert document', inject(function($sanitize) {
+    $sanitize('<svg><g onload="window.xxx = 100"></g></svg>');
+
+    expect(window.xxx).toBe(undefined);
+    delete window.xxx;
+  }));
+
+  // See https://github.com/cure53/DOMPurify/releases/tag/0.6.7
+  it('should not allow JavaScript hidden in badly formed HTML to get through sanitization (Firefox bug)', inject(function($sanitize) {
+    var doc = $sanitize('<svg><p><style><img src="</style><img src=x onerror=alert(1)//">');
+    expect(doc).toEqual('<p><img src="x"></p>');
+  }));
+
+  describe('Custom white-list support', function() {
+
+    var $sanitizeProvider;
+    beforeEach(module(function(_$sanitizeProvider_) {
+      $sanitizeProvider = _$sanitizeProvider_;
+
+      $sanitizeProvider.addValidElements(['foo']);
+      $sanitizeProvider.addValidElements({
+        htmlElements: ['foo-button', 'foo-video'],
+        htmlVoidElements: ['foo-input'],
+        svgElements: ['foo-svg']
+      });
+      $sanitizeProvider.addValidAttrs(['foo']);
+    }));
+
+    it('should allow custom white-listed element', function() {
+      expectHTML('<foo></foo>').toEqual('<foo></foo>');
+      expectHTML('<foo-button></foo-button>').toEqual('<foo-button></foo-button>');
+      expectHTML('<foo-video></foo-video>').toEqual('<foo-video></foo-video>');
+    });
+
+    it('should allow custom white-listed void element', function() {
+      expectHTML('<foo-input/>').toEqual('<foo-input>');
+    });
+
+    it('should allow custom white-listed void element to be used with closing tag', function() {
+      expectHTML('<foo-input></foo-input>').toEqual('<foo-input>');
+    });
+
+    it('should allow custom white-listed attribute', function() {
+      expectHTML('<foo-input foo="foo"/>').toEqual('<foo-input foo="foo">');
+    });
+
+    it('should ignore custom white-listed SVG element if SVG disabled', function() {
+      expectHTML('<foo-svg></foo-svg>').toEqual('');
+    });
+
+    it('should not allow add custom element after service has been instantiated', inject(function($sanitize) {
+      $sanitizeProvider.addValidElements(['bar']);
+      expectHTML('<bar></bar>').toEqual('');
+    }));
+  });
 
   describe('SVG support', function() {
 
     beforeEach(module(function($sanitizeProvider) {
       $sanitizeProvider.enableSvg(true);
+      $sanitizeProvider.addValidElements({
+        svgElements: ['font-face-uri']
+      });
     }));
-
 
     it('should accept SVG tags', function() {
       expectHTML('<svg width="400px" height="150px" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red"></svg>')
@@ -259,6 +360,10 @@ describe('HTML', function() {
 
     });
 
+    it('should allow custom white-listed SVG element', function() {
+      expectHTML('<font-face-uri></font-face-uri>').toEqual('<font-face-uri></font-face-uri>');
+    });
+
     it('should sanitize SVG xlink:href attribute values', function() {
       expectHTML('<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><a xlink:href="javascript:alert()"></a></svg>')
         .toBeOneOf('<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><a></a></svg>',
@@ -270,6 +375,15 @@ describe('HTML', function() {
                    '<svg xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg"><a xlink:href="https://example.com"></a></svg>',
                    '<svg xmlns="http://www.w3.org/2000/svg"><a xlink:href="https://example.com" xmlns:xlink="http://www.w3.org/1999/xlink"></a></svg>',
                    '<svg xmlns="http://www.w3.org/2000/svg"><a xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://example.com"></a></svg>');
+    });
+
+    it('should sanitize SVG xml:base attribute values', function() {
+      expectHTML('<svg xmlns="http://www.w3.org/2000/svg"><a xml:base="javascript:alert(1)//" href="#"></a></svg>')
+        .toEqual('<svg xmlns="http://www.w3.org/2000/svg"><a href="#"></a></svg>');
+
+      expectHTML('<svg xmlns="http://www.w3.org/2000/svg"><a xml:base="https://example.com" href="#"></a></svg>')
+        .toEqual('<svg xmlns="http://www.w3.org/2000/svg"><a xml:base="https://example.com" href="#"></a></svg>');
+
     });
 
     it('should sanitize unknown namespaced SVG attributes', function() {
@@ -309,13 +423,12 @@ describe('HTML', function() {
 
   describe('htmlSanitizerWriter', function() {
     /* global htmlSanitizeWriter: false */
-    if (angular.isUndefined(window.htmlSanitizeWriter)) return;
 
     var writer, html, uriValidator;
     beforeEach(function() {
       html = '';
       uriValidator = jasmine.createSpy('uriValidator');
-      writer = htmlSanitizeWriter({push:function(text) {html+=text;}}, uriValidator);
+      writer = htmlSanitizeWriter({push:function(text) {html += text;}}, uriValidator);
     });
 
     it('should write basic HTML', function() {
@@ -343,13 +456,13 @@ describe('HTML', function() {
       expect(html).toEqual('<div rel="!@#$%^&amp;*()_+-={}[]:&#34;;\'&lt;&gt;?,./`~ &#10;&#0;&#13;&#295;">');
     });
 
-    it('should ignore missformed elements', function() {
+    it('should ignore misformed elements', function() {
       writer.start('d>i&v', {});
       expect(html).toEqual('');
     });
 
     it('should ignore unknown attributes', function() {
-      writer.start('div', {unknown:""});
+      writer.start('div', {unknown:''});
       expect(html).toEqual('<div>');
     });
 
@@ -432,7 +545,7 @@ describe('HTML', function() {
       });
     });
 
-    it('should use $$sanitizeUri for links', function() {
+    it('should use $$sanitizeUri for a[href] links', function() {
       var $$sanitizeUri = jasmine.createSpy('$$sanitizeUri');
       module(function($provide) {
         $provide.value('$$sanitizeUri', $$sanitizeUri);
@@ -448,7 +561,7 @@ describe('HTML', function() {
       });
     });
 
-    it('should use $$sanitizeUri for links', function() {
+    it('should use $$sanitizeUri for img[src] links', function() {
       var $$sanitizeUri = jasmine.createSpy('$$sanitizeUri');
       module(function($provide) {
         $provide.value('$$sanitizeUri', $$sanitizeUri);
@@ -481,13 +594,13 @@ describe('HTML', function() {
     });
 
     it('should not be URI', function() {
-      /* jshint scripturl: true */
+      // eslint-disable-next-line no-script-url
       expect('javascript:alert').not.toBeValidUrl();
     });
 
     describe('javascript URLs', function() {
       it('should ignore javascript:', function() {
-        /* jshint scripturl: true */
+        // eslint-disable-next-line no-script-url
         expect('JavaScript:abc').not.toBeValidUrl();
         expect(' \n Java\n Script:abc').not.toBeValidUrl();
         expect('http://JavaScript/my.js').toBeValidUrl();
@@ -499,7 +612,7 @@ describe('HTML', function() {
         expect('&#106 &#97;&#118;&#97;&#115;&#99;&#114;&#105;&#112;&#116;&#58;').not.toBeValidUrl();
       });
 
-      it('should ignore decimal with leading 0 encodede javascript:', function() {
+      it('should ignore decimal with leading 0 encoded javascript:', function() {
         expect('&#0000106&#0000097&#0000118&#0000097&#0000115&#0000099&#0000114&#0000105&#0000112&#0000116&#0000058').not.toBeValidUrl();
         expect('&#0000106 &#0000097&#0000118&#0000097&#0000115&#0000099&#0000114&#0000105&#0000112&#0000116&#0000058').not.toBeValidUrl();
         expect('&#0000106; &#0000097&#0000118&#0000097&#0000115&#0000099&#0000114&#0000105&#0000112&#0000116&#0000058').not.toBeValidUrl();

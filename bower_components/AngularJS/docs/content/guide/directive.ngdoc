@@ -8,7 +8,8 @@
 <div class="alert alert-warning">
 **Note:** this guide is targeted towards developers who are already familiar with AngularJS basics.
 If you're just getting started, we recommend the {@link tutorial/ tutorial} first.
-If you're looking for the **directives API**, we recently moved it to {@link ng.$compile `$compile`}.
+If you're looking for the **directives API**, you can find it in the
+{@link ng.$compile `$compile` API docs}.
 </div>
 
 
@@ -23,9 +24,9 @@ name, comment or CSS class) that tell AngularJS's **HTML compiler** ({@link ng.$
 to attach a specified behavior to that DOM element (e.g. via event listeners), or even to transform
 the DOM element and its children.
 
-Angular comes with a set of these directives built-in, like `ngBind`, `ngModel`, and `ngClass`.
-Much like you create controllers and services, you can create your own directives for Angular to use.
-When Angular {@link guide/bootstrap bootstraps} your application, the
+AngularJS comes with a set of these directives built-in, like `ngBind`, `ngModel`, and `ngClass`.
+Much like you create controllers and services, you can create your own directives for AngularJS to use.
+When AngularJS {@link guide/bootstrap bootstraps} your application, the
 {@link guide/compiler HTML compiler} traverses the DOM matching directives against the DOM elements.
 
 <div class="alert alert-info">
@@ -40,7 +41,7 @@ mirrors the process of compiling source code in
 
 ## Matching Directives
 
-Before we can write a directive, we need to know how Angular's {@link guide/compiler HTML compiler}
+Before we can write a directive, we need to know how AngularJS's {@link guide/compiler HTML compiler}
 determines when to use a given directive.
 
 Similar to the terminology used when an [element **matches** a selector](https://developer.mozilla.org/en-US/docs/Web/API/Element.matches), we say an element **matches** a
@@ -58,7 +59,7 @@ The following `<input>` element also **matches** `ngModel`:
 <input data-ng-model="foo">
 ```
 
-And the following <person> element **matches** the `person` directive:
+And the following `<person>` element **matches** the `person` directive:
 
 ```html
 <person>{{name}}</person>
@@ -66,11 +67,11 @@ And the following <person> element **matches** the `person` directive:
 
 ### Normalization
 
-Angular **normalizes** an element's tag and attribute name to determine which elements match which
+AngularJS **normalizes** an element's tag and attribute name to determine which elements match which
 directives. We typically refer to directives by their case-sensitive
 [camelCase](http://en.wikipedia.org/wiki/CamelCase) **normalized** name (e.g. `ngModel`).
 However, since HTML is case-insensitive, we refer to directives in the DOM by lower-case
-forms, typically using [dash-delimited](http://en.wikipedia.org/wiki/Letter_case#Computers)
+forms, typically using [dash-delimited](https://en.wikipedia.org/wiki/Letter_case#Special_case_styles)
 attributes on DOM elements (e.g. `ng-model`).
 
 The **normalization** process is as follows:
@@ -80,7 +81,7 @@ The **normalization** process is as follows:
 
 For example, the following forms are all equivalent and match the {@link ngBind} directive:
 
-<example module="docsBindExample">
+<example module="docsBindExample" name="directive-bind">
   <file name="index.html">
     <div ng-controller="Controller">
       Hello <input ng-model='name'> <hr/>
@@ -119,11 +120,13 @@ The other forms shown above are accepted for legacy reasons but we advise you to
 
 ### Directive types
 
-`$compile` can match directives based on element names, attributes, class names, as well as comments.
+`$compile` can match directives based on element names (E), attributes (A), class names (C),
+and comments (M).
 
-All of the Angular-provided directives match attribute name, tag name, comments, or class name.
-The following demonstrates the various ways a directive (`myDir` in this case) can be referenced
-from within a template:
+The built-in AngularJS directives show in their documentation page which type of matching they support.
+
+The following demonstrates the various ways a directive (`myDir` in this case) that matches all
+4 types can be referenced from within a template.
 
 ```html
 <my-dir></my-dir>
@@ -131,6 +134,10 @@ from within a template:
 <!-- directive: my-dir exp -->
 <span class="my-dir: exp;"></span>
 ```
+
+A directive can specify which of the 4 matching types it supports in the
+{@link ng.$compile#-restrict- `restrict`} property of the directive definition object.
+The default is `EA`.
 
 <div class="alert alert-success">
 **Best Practice:** Prefer using directives via tag name and attributes over comment and class names.
@@ -162,10 +169,6 @@ initialization work here. The function is invoked using
 {@link auto.$injector#invoke $injector.invoke} which makes it injectable just like a
 controller.
 
-<div class="alert alert-success">
-**Best Practice:** Prefer using the definition object over returning a function.
-</div>
-
 
 We'll go over a few common examples of directives, then dive deep into the different options
 and compilation process.
@@ -175,7 +178,7 @@ and compilation process.
 directive names. For instance, if you created a `<carousel>` directive, it would be problematic if HTML7
 introduced the same element. A two or three letter prefix (e.g. `btfCarousel`) works well. Similarly, do
 not prefix your own directives with `ng` or they might conflict with directives included in a future
-version of Angular.
+version of AngularJS.
 </div>
 
 For the following examples, we'll use the prefix `my` (e.g. `myCustomer`).
@@ -189,7 +192,7 @@ several others. This is a good opportunity to use a directive to simplify your t
 
 Let's create a directive that simply replaces its contents with a static template:
 
-<example module="docsSimpleDirective">
+<example module="docsSimpleDirective" name="directive-simple">
   <file name="script.js">
     angular.module('docsSimpleDirective', [])
       .controller('Controller', ['$scope', function($scope) {
@@ -228,7 +231,7 @@ its own HTML file and load it with the `templateUrl` option.
 If you are familiar with `ngInclude`, `templateUrl` works just like it. Here's the same example
 using `templateUrl` instead:
 
-<example module="docsTemplateUrlDirective">
+<example module="docsTemplateUrlDirective" name="directive-template-url">
   <file name="script.js">
     angular.module('docsTemplateUrlDirective', [])
       .controller('Controller', ['$scope', function($scope) {
@@ -254,7 +257,7 @@ using `templateUrl` instead:
 </example>
 
 `templateUrl` can also be a function which returns the URL of an HTML template to be loaded and
-used for the directive. Angular will call the `templateUrl` function with two parameters: the
+used for the directive. AngularJS will call the `templateUrl` function with two parameters: the
 element that the directive was called on, and an `attr` object associated with that element.
 
 <div class="alert alert-warning">
@@ -262,7 +265,7 @@ element that the directive was called on, and an `attr` object associated with t
 function, since the template is requested before the scope is initialized.
 </div>
 
-<example module="docsTemplateUrlDirective">
+<example module="docsTemplateUrlDirective" name="directive-template-url-fn">
   <file name="script.js">
     angular.module('docsTemplateUrlDirective', [])
       .controller('Controller', ['$scope', function($scope) {
@@ -273,8 +276,8 @@ function, since the template is requested before the scope is initialized.
       }])
       .directive('myCustomer', function() {
         return {
-          templateUrl: function(elem, attr){
-            return 'customer-'+attr.type+'.html';
+          templateUrl: function(elem, attr) {
+            return 'customer-' + attr.type + '.html';
           }
         };
       });
@@ -311,7 +314,7 @@ These restrictions can all be combined as needed:
 
 Let's change our directive to use `restrict: 'E'`:
 
-<example module="docsRestrictDirective">
+<example module="docsRestrictDirective" name="directive-restrict">
   <file name="script.js">
     angular.module('docsRestrictDirective', [])
       .controller('Controller', ['$scope', function($scope) {
@@ -339,9 +342,7 @@ Let's change our directive to use `restrict: 'E'`:
   </file>
 </example>
 
-For more on the
-{@link ng.$compile#directive-definition-object `restrict`}
-property, see the
+For more on the `restrict` property, see the
 {@link ng.$compile#directive-definition-object API docs}.
 
 <div class="alert alert-info">
@@ -367,7 +368,7 @@ given scope.
 In its current implementation, we'd need to create a different controller each time in order to
 re-use such a directive:
 
-<example module="docsScopeProblemExample">
+<example module="docsScopeProblemExample" name="directive-scope-problem">
   <file name="script.js">
     angular.module('docsScopeProblemExample', [])
       .controller('NaomiController', ['$scope', function($scope) {
@@ -409,7 +410,7 @@ What we want to be able to do is separate the scope inside a directive from the 
 outside, and then map the outer scope to a directive's inner scope. We can do this by creating what
 we call an **isolate scope**. To do this, we can use a {@link $compile#-scope- directive's `scope`} option:
 
-<example module="docsIsolateScopeDirective">
+<example module="docsIsolateScopeDirective" name="directive-isolate">
   <file name="script.js">
     angular.module('docsIsolateScopeDirective', [])
       .controller('Controller', ['$scope', function($scope) {
@@ -454,8 +455,8 @@ scope: {
 The **scope option** is an object that contains a property for each isolate scope binding.  In this
 case it has just one property:
 
-- Its name (`customerInfo`) corresponds to the
-directive's **isolate scope** property `customerInfo`.
+- Its name (`customerInfo`) corresponds to the directive's **isolate scope** property,
+  `customerInfo`.
 - Its value (`=info`) tells `$compile` to bind to the `info` attribute.
 
 <div class="alert alert-warning">
@@ -482,7 +483,7 @@ scope has another effect.
 We can show this by adding another property, `vojta`, to our scope and trying to access it from
 within our directive's template:
 
-<example module="docsIsolationExample">
+<example module="docsIsolationExample" name="directive-isolate-2">
   <file name="script.js">
     angular.module('docsIsolationExample', [])
       .controller('Controller', ['$scope', function($scope) {
@@ -521,8 +522,8 @@ that you explicitly pass in.
 
 <div class="alert alert-warning">
 **Note:** Normally, a scope prototypically inherits from its parent. An isolated scope does not.
-See the {@link $compile#directive-definition-object
-"Directive Definition Object - scope"} section for more information about isolate scopes.
+See the {@link $compile#directive-definition-object "Directive Definition Object - scope"} section
+for more information about isolate scopes.
 </div>
 
 <div class="alert alert-success">
@@ -543,7 +544,7 @@ directive logic will be put.
  `link` takes a function with the following signature,
 `function link(scope, element, attrs, controller, transcludeFn) { ... }`, where:
 
-* `scope` is an Angular scope object.
+* `scope` is an AngularJS scope object.
 * `element` is the jqLite-wrapped element that this directive matches.
 * `attrs` is a hash object with key-value pairs of normalized attribute names and their
   corresponding attribute values.
@@ -561,7 +562,7 @@ to call a handler on a regular basis. This is easier than using `$timeout` but a
 end-to-end testing, where we want to ensure that all `$timeout`s have completed before completing the test.
 We also want to remove the `$interval` if the directive is deleted so we don't introduce a memory leak.
 
-<example module="docsTimeDirective">
+<example module="docsTimeDirective" name="directive-link">
   <file name="script.js">
     angular.module('docsTimeDirective', [])
       .controller('Controller', ['$scope', function($scope) {
@@ -613,7 +614,7 @@ function.
 We register an event `element.on('$destroy', ...)`. What fires this `$destroy` event?
 
 There are a few special events that AngularJS emits. When a DOM node that has been compiled
-with Angular's compiler is destroyed, it emits a `$destroy` event. Similarly, when an AngularJS
+with AngularJS's compiler is destroyed, it emits a `$destroy` event. Similarly, when an AngularJS
 scope is destroyed, it broadcasts a `$destroy` event to listening scopes.
 
 By listening to this event, you can remove event listeners that might cause memory leaks.
@@ -637,7 +638,7 @@ wrap any arbitrary content.
 
 To do this, we need to use the `transclude` option.
 
-<example module="docsTransclusionDirective">
+<example module="docsTransclusionDirective" name="directive-transclude">
   <file name="script.js">
     angular.module('docsTransclusionDirective', [])
       .controller('Controller', ['$scope', function($scope) {
@@ -668,7 +669,7 @@ this option have access to the scope **outside** of the directive rather than in
 To illustrate this, see the example below. Notice that we've added a `link` function in `script.js`
 that redefines `name` as `Jeff`. What do you think the `{{name}}` binding will resolve to now?
 
-<example module="docsTransclusionExample">
+<example module="docsTransclusionExample" name="directive-transclusion">
   <file name="script.js">
     angular.module('docsTransclusionExample', [])
       .controller('Controller', ['$scope', function($scope) {
@@ -680,7 +681,7 @@ that redefines `name` as `Jeff`. What do you think the `{{name}}` binding will r
           transclude: true,
           scope: {},
           templateUrl: 'my-dialog.html',
-          link: function (scope) {
+          link: function(scope) {
             scope.name = 'Jeff';
           }
         };
@@ -718,16 +719,16 @@ arbitrary content.
 Next, we want to add buttons to this dialog box, and allow someone using the directive to bind their
 own behavior to it.
 
-<example module="docsIsoFnBindExample">
+<example module="docsIsoFnBindExample" name="directive-transclusion-scope">
   <file name="script.js">
     angular.module('docsIsoFnBindExample', [])
       .controller('Controller', ['$scope', '$timeout', function($scope, $timeout) {
         $scope.name = 'Tobias';
         $scope.message = '';
-        $scope.hideDialog = function (message) {
+        $scope.hideDialog = function(message) {
           $scope.message = message;
           $scope.dialogIsHidden = true;
-          $timeout(function () {
+          $timeout(function() {
             $scope.message = '';
             $scope.dialogIsHidden = false;
           }, 2000);
@@ -795,7 +796,7 @@ its elements.
 For instance, what if we wanted to create a directive that lets a user drag an
 element?
 
-<example module="dragModule">
+<example module="dragModule" name="directive-drag">
   <file name="script.js">
     angular.module('dragModule', [])
       .directive('myDraggable', ['$document', function($document) {
@@ -852,7 +853,7 @@ Sometimes, you want a component that's built from a combination of directives.
 Imagine you want to have a container with tabs in which the contents of the container correspond
 to which tab is active.
 
-<example module="docsTabsExample">
+<example module="docsTabsExample" name="directive-tabs">
   <file name="script.js">
     angular.module('docsTabsExample', [])
       .directive('myTabs', function() {
@@ -860,7 +861,7 @@ to which tab is active.
           restrict: 'E',
           transclude: true,
           scope: {},
-          controller: ['$scope', function($scope) {
+          controller: ['$scope', function MyTabsController($scope) {
             var panes = $scope.panes = [];
 
             $scope.select = function(pane) {
@@ -976,7 +977,7 @@ controllers using `require`.
 Otherwise use `link`.
 </div>
 
-### Summary
+## Summary
 
 Here we've seen the main use cases for directives. Each of these samples acts as a good starting
 point for creating your own directives.

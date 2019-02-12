@@ -1,10 +1,11 @@
+'use strict';
+
 angular.module('docsApp', [
   'ngRoute',
   'ngCookies',
   'ngSanitize',
   'ngAnimate',
   'DocsController',
-  'versionsData',
   'pagesData',
   'navData',
   'directives',

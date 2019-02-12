@@ -3,40 +3,11 @@
 
 if (window.bindJQuery) bindJQuery();
 
-var supportTests = {
-  classes: '(class {})',
-  fatArrow: 'a => a',
-  ES6Function: '({ fn(x) { return; } })'
-};
-
-var support = {};
-
-for (var prop in supportTests) {
-  if (supportTests.hasOwnProperty(prop)) {
-    /*jshint -W061 */
-    try {
-      eval(supportTests[prop]);
-      support[prop] = true;
-    } catch (e) {
-      support[prop] = false;
-    }
-    /*jshint +W061 */
-  }
-}
-
-
 beforeEach(function() {
 
   // all this stuff is not needed for module tests, where jqlite and publishExternalAPI and jqLite are not global vars
   if (window.publishExternalAPI) {
     publishExternalAPI(angular);
-
-    // workaround for IE bug https://plus.google.com/104744871076396904202/posts/Kqjuj6RSbbT
-    // IE overwrite window.jQuery with undefined because of empty jQuery var statement, so we have to
-    // correct this, but only if we are not running in jqLite mode
-    if (!_jqLiteMode && _jQuery !== jQuery) {
-      jQuery = _jQuery;
-    }
 
     // This resets global id counter;
     uid = 0;
@@ -49,23 +20,22 @@ beforeEach(function() {
     jqCache = jqLite.cache = {};
   }
 
-  angular.element(document.body).empty().removeData();
+  angular.element(window.document.body).empty().removeData();
 });
 
 afterEach(function() {
   var count, cache;
 
-  // both of these nodes are persisted across tests
-  // and therefore the hashCode may be cached
-  var node = document.querySelector('html');
-  if (node) {
-    node.$$hashKey = null;
-  }
-  var bod = document.body;
-  if (bod) {
-    bod.$$hashKey = null;
-  }
-  document.$$hashKey = null;
+  // These Nodes are persisted across tests.
+  // They used to be assigned a `$$hashKey` when animated, which we needed to clear after each test
+  // to avoid affecting other tests. This is no longer the case, so we are just ensuring that there
+  // is indeed no `$$hashKey` on them.
+  var doc = window.document;
+  var html = doc.querySelector('html');
+  var body = doc.body;
+  expect(doc.$$hashKey).toBeFalsy();
+  expect(html && html.$$hashKey).toBeFalsy();
+  expect(body && body.$$hashKey).toBeFalsy();
 
   if (this.$injector) {
     var $rootScope = this.$injector.get('$rootScope');
@@ -76,7 +46,9 @@ afterEach(function() {
     dealoc($rootElement);
 
     // check $log mock
-    $log.assertEmpty && $log.assertEmpty();
+    if ($log.assertEmpty) {
+      $log.assertEmpty();
+    }
   }
 
   if (!window.jQuery) {
@@ -95,6 +67,7 @@ afterEach(function() {
         } else {
           dump('LEAK', key, angular.toJson(value));
         }
+        delete expando.data[key];
       });
     });
     if (count) {
@@ -123,7 +96,7 @@ function dealoc(obj) {
       // jQuery 2.x doesn't expose the cache storage.
       for (var key in jqCache) {
         var value = jqCache[key];
-        if (value.data && value.data.$scope == obj) {
+        if (value.data && value.data.$scope === obj) {
           delete jqCache[key];
         }
       }
@@ -155,15 +128,15 @@ function jqLiteCacheSize() {
  * @param {boolean=} showNgClass
  */
 function sortedHtml(element, showNgClass) {
-  var html = "";
+  var html = '';
   forEach(jqLite(element), function toString(node) {
 
-    if (node.nodeName == "#text") {
+    if (node.nodeName === '#text') {
       html += node.nodeValue.
         replace(/&(\w+[&;\W])?/g, function(match, entity) {return entity ? match : '&amp;';}).
         replace(/</g, '&lt;').
         replace(/>/g, '&gt;');
-    } else if (node.nodeName == "#comment") {
+    } else if (node.nodeName === '#comment') {
       html += '<!--' + node.nodeValue + '-->';
     } else {
       html += '<' + (node.nodeName || '?NOT_A_NODE?').toLowerCase();
@@ -178,40 +151,28 @@ function sortedHtml(element, showNgClass) {
         attrs.push(' class="' + className + '"');
       }
       for (var i = 0; i < attributes.length; i++) {
-        if (i > 0 && attributes[i] == attributes[i - 1]) {
-          continue; //IE9 creates dupes. Ignore them!
+        if (i > 0 && attributes[i] === attributes[i - 1]) {
+          continue; // IE9 creates dupes. Ignore them!
         }
 
         var attr = attributes[i];
-        if (attr.name.match(/^ng[\:\-]/) ||
+        if (attr.name.match(/^ng[:-]/) ||
+            !/^ng\d+/.test(attr.name) &&
             (attr.value || attr.value === '') &&
-            attr.value != 'null' &&
-            attr.value != 'auto' &&
-            attr.value != 'false' &&
-            attr.value != 'inherit' &&
-            (attr.value != '0' || attr.name == 'value') &&
-            attr.name != 'loop' &&
-            attr.name != 'complete' &&
-            attr.name != 'maxLength' &&
-            attr.name != 'size' &&
-            attr.name != 'class' &&
-            attr.name != 'start' &&
-            attr.name != 'tabIndex' &&
-            attr.name != 'style' &&
-            attr.name.substr(0, 6) != 'jQuery') {
-          // in IE we need to check for all of these.
-          if (/ng\d+/.exec(attr.name) ||
-              attr.name == 'getElementById' ||
-              // IE7 has `selected` in attributes
-              attr.name == 'selected' ||
-              // IE7 adds `value` attribute to all LI tags
-              (node.nodeName == 'LI' && attr.name == 'value') ||
-              // IE8 adds bogus rowspan=1 and colspan=1 to TD elements
-              (node.nodeName == 'TD' && attr.name == 'rowSpan' && attr.value == '1') ||
-              (node.nodeName == 'TD' && attr.name == 'colSpan' && attr.value == '1')) {
-            continue;
-          }
-
+            attr.value !== 'null' &&
+            attr.value !== 'auto' &&
+            attr.value !== 'false' &&
+            attr.value !== 'inherit' &&
+            (attr.value !== '0' || attr.name === 'value') &&
+            attr.name !== 'loop' &&
+            attr.name !== 'complete' &&
+            attr.name !== 'maxLength' &&
+            attr.name !== 'size' &&
+            attr.name !== 'class' &&
+            attr.name !== 'start' &&
+            attr.name !== 'tabIndex' &&
+            attr.name !== 'style' &&
+            attr.name.substr(0, 6) !== 'jQuery') {
           attrs.push(' ' + attr.name + '="' + attr.value + '"');
         }
       }
@@ -229,9 +190,9 @@ function sortedHtml(element, showNgClass) {
         }
         for (var css in node.style) {
           var value = node.style[css];
-          if (isString(value) && isString(css) && css != 'cssText' && value && (1 * css != css)) {
+          if (isString(value) && isString(css) && css !== 'cssText' && value && isNaN(Number(css))) {
             var text = lowercase(css + ': ' + value);
-            if (value != 'false' && style.indexOf(text) == -1) {
+            if (value !== 'false' && style.indexOf(text) === -1) {
               style.push(text);
             }
           }
@@ -240,7 +201,7 @@ function sortedHtml(element, showNgClass) {
         var tmp = style;
         style = [];
         forEach(tmp, function(value) {
-          if (!value.match(/^max[^\-]/)) {
+          if (!value.match(/^max[^-]/)) {
             style.push(value);
           }
         });
@@ -278,7 +239,7 @@ function childrenTagsOf(element) {
  */
 function isCssVisible(node) {
   var display = node.css('display');
-  return !node.hasClass('ng-hide') && display != 'none';
+  return !node.hasClass('ng-hide') && display !== 'none';
 }
 
 function assertHidden(node) {
@@ -352,14 +313,35 @@ window.dump = function() {
 
 function generateInputCompilerHelper(helper) {
   beforeEach(function() {
+    helper.validationCounter = {};
+
     module(function($compileProvider) {
+      $compileProvider.directive('validationSpy', function() {
+        return {
+          priority: 1,
+          require: 'ngModel',
+          link: function(scope, element, attrs, ctrl) {
+            var validationName = attrs.validationSpy;
+
+            var originalValidator = ctrl.$validators[validationName];
+            helper.validationCounter[validationName] = 0;
+
+            ctrl.$validators[validationName] = function(modelValue, viewValue) {
+              helper.validationCounter[validationName]++;
+
+              return originalValidator(modelValue, viewValue);
+            };
+          }
+        };
+      });
+
       $compileProvider.directive('attrCapture', function() {
         return function(scope, element, $attrs) {
           helper.attrs = $attrs;
         };
       });
     });
-    inject(function($compile, $rootScope, $sniffer) {
+    inject(function($compile, $rootScope, $sniffer, $document, $rootElement) {
 
       helper.compileInput = function(inputHtml, mockValidity, scope) {
 
@@ -381,6 +363,11 @@ function generateInputCompilerHelper(helper) {
         // Compile the lot and return the input element
         $compile(helper.formElm)(scope);
 
+        $rootElement.append(helper.formElm);
+        // Append the app to the document so that "click" on a radio/checkbox triggers "change"
+        // Support: Chrome, Safari 8, 9
+        jqLite($document[0].body).append($rootElement);
+
         spyOn(scope.form, '$addControl').and.callThrough();
         spyOn(scope.form, '$$renameControl').and.callThrough();
 
@@ -390,8 +377,7 @@ function generateInputCompilerHelper(helper) {
       };
 
       helper.changeInputValueTo = function(value) {
-        helper.inputElm.val(value);
-        browserTrigger(helper.inputElm, $sniffer.hasEvent('input') ? 'input' : 'change');
+        helper.changeGivenInputTo(helper.inputElm, value);
       };
 
       helper.changeGivenInputTo = function(inputElm, value) {

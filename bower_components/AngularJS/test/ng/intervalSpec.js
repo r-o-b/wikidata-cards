@@ -243,14 +243,14 @@ describe('$interval', function() {
 
     it('should delegate exception to the $exceptionHandler service', inject(
         function($interval, $exceptionHandler, $window) {
-      $interval(function() { throw "Test Error"; }, 1000);
+      $interval(function() { throw 'Test Error'; }, 1000);
       expect($exceptionHandler.errors).toEqual([]);
 
       $window.flush(1000);
-      expect($exceptionHandler.errors).toEqual(["Test Error"]);
+      expect($exceptionHandler.errors).toEqual(['Test Error']);
 
       $window.flush(1000);
-      expect($exceptionHandler.errors).toEqual(["Test Error", "Test Error"]);
+      expect($exceptionHandler.errors).toEqual(['Test Error', 'Test Error']);
     }));
 
 
@@ -258,7 +258,7 @@ describe('$interval', function() {
         function($interval, $rootScope, $window) {
       var applySpy = spyOn($rootScope, '$apply').and.callThrough();
 
-      $interval(function() { throw "Test Error"; }, 1000);
+      $interval(function() { throw 'Test Error'; }, 1000);
       expect(applySpy).not.toHaveBeenCalled();
 
       $window.flush(1000);
@@ -269,7 +269,7 @@ describe('$interval', function() {
     it('should still update the interval promise when an exception is thrown',
         inject(function($interval, $window) {
       var log = [],
-          promise = $interval(function() { throw "Some Error"; }, 1000);
+          promise = $interval(function() { throw 'Some Error'; }, 1000);
 
       promise.then(function(value) { log.push('promise success: ' + value); },
                  function(err) { log.push('promise error: ' + err); },
@@ -335,9 +335,25 @@ describe('$interval', function() {
     }));
 
 
-    it('should not throw a runtime exception when given an undefined promise',
-        inject(function($interval) {
+    it('should not throw an error when given an undefined promise', inject(function($interval) {
       expect($interval.cancel()).toBe(false);
+    }));
+
+
+    it('should throw an error when given a non-$interval promise', inject(function($interval) {
+      var promise = $interval(noop).then(noop);
+      expect(function() { $interval.cancel(promise); }).toThrowMinErr('$interval', 'badprom');
+    }));
+
+
+    it('should not trigger digest when cancelled', inject(function($interval, $rootScope, $browser) {
+      var watchSpy = jasmine.createSpy('watchSpy');
+      $rootScope.$watch(watchSpy);
+
+      var t = $interval();
+      $interval.cancel(t);
+      expect(function() {$browser.defer.flush();}).toThrowError('No deferred tasks to be flushed');
+      expect(watchSpy).not.toHaveBeenCalled();
     }));
   });
 

@@ -12,9 +12,9 @@ describe('$anchorScroll', function() {
         var mockedWin = {
           scrollTo: jasmine.createSpy('$window.scrollTo'),
           scrollBy: jasmine.createSpy('$window.scrollBy'),
-          document: document,
+          document: window.document,
           getComputedStyle: function(elem) {
-            return getComputedStyle(elem);
+            return window.getComputedStyle(elem);
           }
         };
 
@@ -87,15 +87,7 @@ describe('$anchorScroll', function() {
 
     return function($window) {
       forEach(elmSpy, function(spy, id) {
-        var count = map[id] || 0;
-        // TODO(gkalpak): `toHaveBeenCalledTimes()` works correctly with 0 since
-        // https://github.com/jasmine/jasmine/commit/342f0eb9a38194ecb8559e7df872c72afc0fe52e
-        // Fix when we upgrade to a version that contains the fix.
-        if (count > 0) {
-          expect(spy).toHaveBeenCalledTimes(count);
-        } else {
-          expect(spy).not.toHaveBeenCalled();
-        }
+        expect(spy).toHaveBeenCalledTimes(map[id] || 0);
       });
       expect($window.scrollTo).not.toHaveBeenCalled();
     };
@@ -184,7 +176,7 @@ describe('$anchorScroll', function() {
         expectScrollingTo('id=abc')));
 
 
-      it('should scroll to top if hash == "top" and no matching element', inject(
+      it('should scroll to top if hash === "top" and no matching element', inject(
         changeHashAndScroll('top'),
         expectScrollingToTop));
 
@@ -251,7 +243,7 @@ describe('$anchorScroll', function() {
         expectScrollingTo('id=abc')));
 
 
-      it('should scroll to top if hash == "top" and no matching element', inject(
+      it('should scroll to top if hash === "top" and no matching element', inject(
         callAnchorScroll('top'),
         expectScrollingToTop));
 
@@ -260,6 +252,18 @@ describe('$anchorScroll', function() {
         addElements('id=top'),
         callAnchorScroll('top'),
         expectScrollingTo('id=top')));
+
+
+      it('should scroll to element with id "7" if present, with a given hash of type number', inject(
+        addElements('id=7'),
+        callAnchorScroll(7),
+        expectScrollingTo('id=7')));
+
+
+      it('should scroll to element with id "7" if present, with a given hash of type string', inject(
+        addElements('id=7'),
+        callAnchorScroll('7'),
+        expectScrollingTo('id=7')));
     });
   });
 
@@ -389,14 +393,7 @@ describe('$anchorScroll', function() {
 
       return function($rootScope, $window) {
         inject(expectScrollingTo(identifierCountMap));
-        // TODO(gkalpak): `toHaveBeenCalledTimes()` works correctly with 0 since
-        // https://github.com/jasmine/jasmine/commit/342f0eb9a38194ecb8559e7df872c72afc0fe52e
-        // Fix when we upgrade to a version that contains the fix.
-        if (list.length > 0) {
-          expect($window.scrollBy).toHaveBeenCalledTimes(list.length);
-        } else {
-          expect($window.scrollBy).not.toHaveBeenCalled();
-        }
+        expect($window.scrollBy).toHaveBeenCalledTimes(list.length);
         forEach(list, function(offset, idx) {
           // Due to sub-pixel rendering, there is a +/-1 error margin in the actual offset
           var args = $window.scrollBy.calls.argsFor(idx);

@@ -6,7 +6,7 @@ describe('ngModel', function() {
 
   describe('NgModelController', function() {
     /* global NgModelController: false */
-    var ctrl, scope, ngModelAccessor, element, parentFormCtrl;
+    var ctrl, scope, element, parentFormCtrl;
 
     beforeEach(inject(function($rootScope, $controller) {
       var attrs = {name: 'testAlias', ngModel: 'value'};
@@ -21,7 +21,6 @@ describe('ngModel', function() {
       element = jqLite('<form><input></form>');
 
       scope = $rootScope;
-      ngModelAccessor = jasmine.createSpy('ngModel accessor');
       ctrl = $controller(NgModelController, {
         $scope: scope,
         $element: element.find('input'),
@@ -438,6 +437,13 @@ describe('ngModel', function() {
         expect(ctrl.$modelValue).toBe('c');
         expect(scope.value).toBe('c');
       }));
+
+
+      it('should not throw an error if the scope has been destroyed', function() {
+        scope.$destroy();
+        ctrl.$setViewValue('some-val');
+        expect(ctrl.$viewValue).toBe('some-val');
+      });
     });
 
 
@@ -603,6 +609,113 @@ describe('ngModel', function() {
         expect(ctrl.$modelValue).toBeNaN();
 
       }));
+
+      describe('$processModelValue', function() {
+        // Emulate setting the model on the scope
+        function setModelValue(ctrl, value) {
+          ctrl.$modelValue = ctrl.$$rawModelValue = value;
+          ctrl.$$parserValid = undefined;
+        }
+
+        it('should run the model -> view pipeline', function() {
+          var log = [];
+          var input = ctrl.$$element;
+
+          ctrl.$formatters.unshift(function(value) {
+            log.push(value);
+            return value + 2;
+          });
+
+          ctrl.$formatters.unshift(function(value) {
+            log.push(value);
+            return value + '';
+          });
+
+          spyOn(ctrl, '$render');
+
+          setModelValue(ctrl, 3);
+
+          expect(ctrl.$modelValue).toBe(3);
+
+          ctrl.$processModelValue();
+
+          expect(ctrl.$modelValue).toBe(3);
+          expect(log).toEqual([3, 5]);
+          expect(ctrl.$viewValue).toBe('5');
+          expect(ctrl.$render).toHaveBeenCalledOnce();
+        });
+
+        it('should add the validation and empty-state classes',
+          inject(function($compile, $rootScope, $animate) {
+            var input = $compile('<input name="myControl" maxlength="1" ng-model="value" >')($rootScope);
+            $rootScope.$digest();
+
+            spyOn($animate, 'addClass');
+            spyOn($animate, 'removeClass');
+
+            var ctrl = input.controller('ngModel');
+
+            expect(input).toHaveClass('ng-empty');
+            expect(input).toHaveClass('ng-valid');
+
+            setModelValue(ctrl, 3);
+            ctrl.$processModelValue();
+
+            // $animate adds / removes classes in the $$postDigest, which
+            // we cannot trigger with $digest, because that would set the model from the scope,
+            // so we simply check if the functions have been called
+            expect($animate.removeClass.calls.mostRecent().args[0][0]).toBe(input[0]);
+            expect($animate.removeClass.calls.mostRecent().args[1]).toBe('ng-empty');
+
+            expect($animate.addClass.calls.mostRecent().args[0][0]).toBe(input[0]);
+            expect($animate.addClass.calls.mostRecent().args[1]).toBe('ng-not-empty');
+
+            $animate.removeClass.calls.reset();
+            $animate.addClass.calls.reset();
+
+            setModelValue(ctrl, 35);
+            ctrl.$processModelValue();
+
+            expect($animate.addClass.calls.argsFor(1)[0][0]).toBe(input[0]);
+            expect($animate.addClass.calls.argsFor(1)[1]).toBe('ng-invalid');
+
+            expect($animate.addClass.calls.argsFor(2)[0][0]).toBe(input[0]);
+            expect($animate.addClass.calls.argsFor(2)[1]).toBe('ng-invalid-maxlength');
+          })
+        );
+
+        // this is analogue to $setViewValue
+        it('should run the model -> view pipeline even if the value has not changed', function() {
+          var log = [];
+
+          ctrl.$formatters.unshift(function(value) {
+            log.push(value);
+            return value + 2;
+          });
+
+          ctrl.$formatters.unshift(function(value) {
+            log.push(value);
+            return value + '';
+          });
+
+          spyOn(ctrl, '$render');
+
+          setModelValue(ctrl, 3);
+          ctrl.$processModelValue();
+
+          expect(ctrl.$modelValue).toBe(3);
+          expect(ctrl.$viewValue).toBe('5');
+          expect(log).toEqual([3, 5]);
+          expect(ctrl.$render).toHaveBeenCalledOnce();
+
+          ctrl.$processModelValue();
+          expect(ctrl.$modelValue).toBe(3);
+          expect(ctrl.$viewValue).toBe('5');
+          expect(log).toEqual([3, 5, 3, 5]);
+          // $render() is not called if the viewValue didn't change
+          expect(ctrl.$render).toHaveBeenCalledOnce();
+        });
+      });
     });
 
 
@@ -750,7 +863,6 @@ describe('ngModel', function() {
         });
       });
 
-
       describe('view -> model update', function() {
 
         it('should always perform validations using the parsed model value', function() {
@@ -827,38 +939,52 @@ describe('ngModel', function() {
 
 
       it('should only validate to true if all validations are true', function() {
-        var curry = function(v) {
-          return function() {
-            return v;
-          };
-        };
-
         ctrl.$modelValue = undefined;
-        ctrl.$validators.a = curry(true);
-        ctrl.$validators.b = curry(true);
-        ctrl.$validators.c = curry(false);
+        ctrl.$validators.a = valueFn(true);
+        ctrl.$validators.b = valueFn(true);
+        ctrl.$validators.c = valueFn(false);
 
         ctrl.$validate();
         expect(ctrl.$valid).toBe(false);
 
-        ctrl.$validators.c = curry(true);
+        ctrl.$validators.c = valueFn(true);
 
         ctrl.$validate();
         expect(ctrl.$valid).toBe(true);
       });
 
+      it('should treat all responses as boolean for synchronous validators', function() {
+        var expectValid = function(value, expected) {
+          ctrl.$modelValue = undefined;
+          ctrl.$validators.a = valueFn(value);
 
-      it('should register invalid validations on the $error object', function() {
-        var curry = function(v) {
-          return function() {
-            return v;
-          };
+          ctrl.$validate();
+          expect(ctrl.$valid).toBe(expected);
         };
 
+        // False tests
+        expectValid(false, false);
+        expectValid(undefined, false);
+        expectValid(null, false);
+        expectValid(0, false);
+        expectValid(NaN, false);
+        expectValid('', false);
+
+        // True tests
+        expectValid(true, true);
+        expectValid(1, true);
+        expectValid('0', true);
+        expectValid('false', true);
+        expectValid([], true);
+        expectValid({}, true);
+      });
+
+
+      it('should register invalid validations on the $error object', function() {
         ctrl.$modelValue = undefined;
-        ctrl.$validators.unique = curry(false);
-        ctrl.$validators.tooLong = curry(false);
-        ctrl.$validators.notNumeric = curry(true);
+        ctrl.$validators.unique = valueFn(false);
+        ctrl.$validators.tooLong = valueFn(false);
+        ctrl.$validators.notNumeric = valueFn(true);
 
         ctrl.$validate();
 
@@ -906,8 +1032,8 @@ describe('ngModel', function() {
 
         expect(function() {
           scope.$apply('value = "123"');
-        }).toThrowMinErr("ngModel", "nopromise",
-          "Expected asynchronous validator to return a promise but got 'true' instead.");
+        }).toThrowMinErr('ngModel', 'nopromise',
+          'Expected asynchronous validator to return a promise but got \'true\' instead.');
       }));
 
 
@@ -1095,6 +1221,7 @@ describe('ngModel', function() {
 
       it('should be possible to extend Object prototype and still be able to do form validation',
         inject(function($compile, $rootScope) {
+        // eslint-disable-next-line no-extend-native
         Object.prototype.someThing = function() {};
         var element = $compile('<form name="myForm">' +
                                  '<input type="text" name="username" ng-model="username" minlength="10" required />' +
@@ -1256,13 +1383,13 @@ describe('ngModel', function() {
           }
         };
 
-        ctrl.$$parserName = 'parserOrValidator';
         ctrl.$parsers.push(function(value) {
           switch (value) {
             case 'allInvalid':
             case 'stillAllInvalid':
             case 'parseInvalid-validatorsValid':
             case 'stillParseInvalid-validatorsValid':
+              ctrl.$$parserName = 'parserOrValidator';
               return undefined;
             default:
               return value;
@@ -1322,11 +1449,53 @@ describe('ngModel', function() {
       });
 
     });
+
+    describe('override ModelOptions', function() {
+      it('should replace the previous model options', function() {
+        var $options = ctrl.$options;
+        ctrl.$overrideModelOptions({});
+        expect(ctrl.$options).not.toBe($options);
+      });
+
+      it('should set the given options', function() {
+        var $options = ctrl.$options;
+        ctrl.$overrideModelOptions({ debounce: 1000, updateOn: 'blur' });
+        expect(ctrl.$options.getOption('debounce')).toEqual(1000);
+        expect(ctrl.$options.getOption('updateOn')).toEqual('blur');
+        expect(ctrl.$options.getOption('updateOnDefault')).toBe(false);
+      });
+
+      it('should inherit from a parent model options if specified', inject(function($compile, $rootScope) {
+        var element = $compile(
+          '<form name="form" ng-model-options="{debounce: 1000, updateOn: \'blur\'}">' +
+          '  <input ng-model="value" name="input">' +
+          '</form>')($rootScope);
+        var ctrl = $rootScope.form.input;
+        ctrl.$overrideModelOptions({ debounce: 2000, '*': '$inherit' });
+        expect(ctrl.$options.getOption('debounce')).toEqual(2000);
+        expect(ctrl.$options.getOption('updateOn')).toEqual('blur');
+        expect(ctrl.$options.getOption('updateOnDefault')).toBe(false);
+        dealoc(element);
+      }));
+
+      it('should not inherit from a parent model options if not specified', inject(function($compile, $rootScope) {
+        var element = $compile(
+          '<form name="form" ng-model-options="{debounce: 1000, updateOn: \'blur\'}">' +
+          '  <input ng-model="value" name="input">' +
+          '</form>')($rootScope);
+        var ctrl = $rootScope.form.input;
+        ctrl.$overrideModelOptions({ debounce: 2000 });
+        expect(ctrl.$options.getOption('debounce')).toEqual(2000);
+        expect(ctrl.$options.getOption('updateOn')).toEqual('');
+        expect(ctrl.$options.getOption('updateOnDefault')).toBe(true);
+        dealoc(element);
+      }));
+    });
   });
 
 
   describe('CSS classes', function() {
-    var EMAIL_REGEXP = /^[a-z0-9!#$%&'*+\/=?^_`{|}~.-]+@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/i;
+    var EMAIL_REGEXP = /^[a-z0-9!#$%&'*+/=?^_`{|}~.-]+@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/i;
 
     it('should set ng-empty or ng-not-empty when the view value changes',
           inject(function($compile, $rootScope, $sniffer) {
@@ -1361,7 +1530,7 @@ describe('ngModel', function() {
       expect(element.hasClass('ng-valid-email')).toBe(true);
       expect(element.hasClass('ng-invalid-email')).toBe(false);
 
-      $rootScope.$apply("value = 'invalid-email'");
+      $rootScope.$apply('value = \'invalid-email\'');
       expect(element).toBeInvalid();
       expect(element).toBePristine();
       expect(element.hasClass('ng-valid-email')).toBe(false);
@@ -1630,7 +1799,7 @@ describe('ngModel', function() {
       expect(isFormValid).toBe(false);
       expect($rootScope.myForm.$valid).toBe(false);
 
-      $rootScope.value='value';
+      $rootScope.value = 'value';
       $rootScope.$apply();
       expect(isFormValid).toBe(true);
       expect($rootScope.myForm.$valid).toBe(true);
@@ -1647,7 +1816,7 @@ describe('ngModel', function() {
       var animations = [];
       for (var i = 0; i < queue.length; i++) {
         var animation = queue[i];
-        if (animation.element[0] == node) {
+        if (animation.element[0] === node) {
           animations.push(animation);
         }
       }
@@ -1766,617 +1935,5 @@ describe('ngModel', function() {
       assertValidAnimation(animations[2], 'addClass', 'ng-valid-custom-error');
       assertValidAnimation(animations[3], 'removeClass', 'ng-invalid-custom-error');
     }));
-  });
-});
-
-
-describe('ngModelOptions attributes', function() {
-
-  var helper = {}, $rootScope, $compile, $timeout, $q;
-
-  generateInputCompilerHelper(helper);
-
-  beforeEach(inject(function(_$compile_, _$rootScope_, _$timeout_, _$q_) {
-    $compile = _$compile_;
-    $rootScope = _$rootScope_;
-    $timeout = _$timeout_;
-    $q = _$q_;
-  }));
-
-
-  it('should allow overriding the model update trigger event on text inputs', function() {
-    var inputElm = helper.compileInput(
-        '<input type="text" ng-model="name" name="alias" ' +
-          'ng-model-options="{ updateOn: \'blur\' }"' +
-        '/>');
-
-    helper.changeInputValueTo('a');
-    expect($rootScope.name).toBeUndefined();
-    browserTrigger(inputElm, 'blur');
-    expect($rootScope.name).toEqual('a');
-  });
-
-
-  it('should not dirty the input if nothing was changed before updateOn trigger', function() {
-    var inputElm = helper.compileInput(
-        '<input type="text" ng-model="name" name="alias" ' +
-          'ng-model-options="{ updateOn: \'blur\' }"' +
-        '/>');
-
-    browserTrigger(inputElm, 'blur');
-    expect($rootScope.form.alias.$pristine).toBeTruthy();
-  });
-
-
-  it('should allow overriding the model update trigger event on text areas', function() {
-    var inputElm = helper.compileInput(
-        '<textarea ng-model="name" name="alias" ' +
-          'ng-model-options="{ updateOn: \'blur\' }"' +
-        '/>');
-
-    helper.changeInputValueTo('a');
-    expect($rootScope.name).toBeUndefined();
-    browserTrigger(inputElm, 'blur');
-    expect($rootScope.name).toEqual('a');
-  });
-
-
-  it('should bind the element to a list of events', function() {
-    var inputElm = helper.compileInput(
-        '<input type="text" ng-model="name" name="alias" ' +
-          'ng-model-options="{ updateOn: \'blur mousemove\' }"' +
-        '/>');
-
-    helper.changeInputValueTo('a');
-    expect($rootScope.name).toBeUndefined();
-    browserTrigger(inputElm, 'blur');
-    expect($rootScope.name).toEqual('a');
-
-    helper.changeInputValueTo('b');
-    expect($rootScope.name).toEqual('a');
-    browserTrigger(inputElm, 'mousemove');
-    expect($rootScope.name).toEqual('b');
-  });
-
-
-  it('should allow keeping the default update behavior on text inputs', function() {
-    var inputElm = helper.compileInput(
-        '<input type="text" ng-model="name" name="alias" ' +
-          'ng-model-options="{ updateOn: \'default\' }"' +
-        '/>');
-
-    helper.changeInputValueTo('a');
-    expect($rootScope.name).toEqual('a');
-  });
-
-
-  it('should allow sharing options between multiple inputs', function() {
-    $rootScope.options = {updateOn: 'default'};
-    var inputElm = helper.compileInput(
-        '<input type="text" ng-model="name1" name="alias1" ' +
-          'ng-model-options="options"' +
-        '/>' +
-        '<input type="text" ng-model="name2" name="alias2" ' +
-          'ng-model-options="options"' +
-        '/>');
-
-    helper.changeGivenInputTo(inputElm.eq(0), 'a');
-    helper.changeGivenInputTo(inputElm.eq(1), 'b');
-    expect($rootScope.name1).toEqual('a');
-    expect($rootScope.name2).toEqual('b');
-  });
-
-
-  it('should hold a copy of the options object', function() {
-    $rootScope.options = {updateOn: 'default'};
-    var inputElm = helper.compileInput(
-        '<input type="text" ng-model="name" name="alias" ' +
-          'ng-model-options="options"' +
-        '/>');
-    expect($rootScope.options).toEqual({updateOn: 'default'});
-    expect($rootScope.form.alias.$options).not.toBe($rootScope.options);
-  });
-
-
-  it('should allow overriding the model update trigger event on checkboxes', function() {
-    var inputElm = helper.compileInput(
-        '<input type="checkbox" ng-model="checkbox" ' +
-          'ng-model-options="{ updateOn: \'blur\' }"' +
-        '/>');
-
-    browserTrigger(inputElm, 'click');
-    expect($rootScope.checkbox).toBeUndefined();
-
-    browserTrigger(inputElm, 'blur');
-    expect($rootScope.checkbox).toBe(true);
-
-    browserTrigger(inputElm, 'click');
-    expect($rootScope.checkbox).toBe(true);
-  });
-
-
-  it('should allow keeping the default update behavior on checkboxes', function() {
-    var inputElm = helper.compileInput(
-        '<input type="checkbox" ng-model="checkbox" ' +
-          'ng-model-options="{ updateOn: \'blur default\' }"' +
-        '/>');
-
-    browserTrigger(inputElm, 'click');
-    expect($rootScope.checkbox).toBe(true);
-
-    browserTrigger(inputElm, 'click');
-    expect($rootScope.checkbox).toBe(false);
-  });
-
-
-  it('should allow overriding the model update trigger event on radio buttons', function() {
-    var inputElm = helper.compileInput(
-        '<input type="radio" ng-model="color" value="white" ' +
-          'ng-model-options="{ updateOn: \'blur\'}"' +
-        '/>' +
-        '<input type="radio" ng-model="color" value="red" ' +
-          'ng-model-options="{ updateOn: \'blur\'}"' +
-        '/>' +
-        '<input type="radio" ng-model="color" value="blue" ' +
-          'ng-model-options="{ updateOn: \'blur\'}"' +
-        '/>');
-
-    $rootScope.$apply("color = 'white'");
-    browserTrigger(inputElm[2], 'click');
-    expect($rootScope.color).toBe('white');
-
-    browserTrigger(inputElm[2], 'blur');
-    expect($rootScope.color).toBe('blue');
-
-  });
-
-
-  it('should allow keeping the default update behavior on radio buttons', function() {
-    var inputElm = helper.compileInput(
-        '<input type="radio" ng-model="color" value="white" ' +
-          'ng-model-options="{ updateOn: \'blur default\' }"' +
-        '/>' +
-        '<input type="radio" ng-model="color" value="red" ' +
-          'ng-model-options="{ updateOn: \'blur default\' }"' +
-        '/>' +
-        '<input type="radio" ng-model="color" value="blue" ' +
-          'ng-model-options="{ updateOn: \'blur default\' }"' +
-        '/>');
-
-    $rootScope.$apply("color = 'white'");
-    browserTrigger(inputElm[2], 'click');
-    expect($rootScope.color).toBe('blue');
-  });
-
-
-  it('should trigger only after timeout in text inputs', function() {
-    var inputElm = helper.compileInput(
-        '<input type="text" ng-model="name" name="alias" ' +
-          'ng-model-options="{ debounce: 10000 }"' +
-        '/>');
-
-    helper.changeInputValueTo('a');
-    helper.changeInputValueTo('b');
-    helper.changeInputValueTo('c');
-    expect($rootScope.name).toEqual(undefined);
-    $timeout.flush(2000);
-    expect($rootScope.name).toEqual(undefined);
-    $timeout.flush(9000);
-    expect($rootScope.name).toEqual('c');
-  });
-
-
-  it('should trigger only after timeout in checkboxes', function() {
-    var inputElm = helper.compileInput(
-        '<input type="checkbox" ng-model="checkbox" ' +
-          'ng-model-options="{ debounce: 10000 }"' +
-        '/>');
-
-    browserTrigger(inputElm, 'click');
-    expect($rootScope.checkbox).toBeUndefined();
-    $timeout.flush(2000);
-    expect($rootScope.checkbox).toBeUndefined();
-    $timeout.flush(9000);
-    expect($rootScope.checkbox).toBe(true);
-  });
-
-
-  it('should trigger only after timeout in radio buttons', function() {
-    var inputElm = helper.compileInput(
-        '<input type="radio" ng-model="color" value="white" />' +
-        '<input type="radio" ng-model="color" value="red" ' +
-          'ng-model-options="{ debounce: 20000 }"' +
-        '/>' +
-        '<input type="radio" ng-model="color" value="blue" ' +
-          'ng-model-options="{ debounce: 30000 }"' +
-        '/>');
-
-    browserTrigger(inputElm[0], 'click');
-    expect($rootScope.color).toBe('white');
-    browserTrigger(inputElm[1], 'click');
-    expect($rootScope.color).toBe('white');
-    $timeout.flush(12000);
-    expect($rootScope.color).toBe('white');
-    $timeout.flush(10000);
-    expect($rootScope.color).toBe('red');
-
-  });
-
-
-  it('should not trigger digest while debouncing', function() {
-    var inputElm = helper.compileInput(
-        '<input type="text" ng-model="name" name="alias" ' +
-          'ng-model-options="{ debounce: 10000 }"' +
-        '/>');
-
-    var watchSpy = jasmine.createSpy('watchSpy');
-    $rootScope.$watch(watchSpy);
-
-    helper.changeInputValueTo('a');
-    expect(watchSpy).not.toHaveBeenCalled();
-
-    $timeout.flush(10000);
-    expect(watchSpy).toHaveBeenCalled();
-  });
-
-
-  it('should allow selecting different debounce timeouts for each event',
-    function() {
-    var inputElm = helper.compileInput(
-        '<input type="text" ng-model="name" name="alias" ' +
-          'ng-model-options="{' +
-            'updateOn: \'default blur\', ' +
-            'debounce: { default: 10000, blur: 5000 }' +
-          '}"' +
-        '/>');
-
-    helper.changeInputValueTo('a');
-    expect($rootScope.checkbox).toBeUndefined();
-    $timeout.flush(6000);
-    expect($rootScope.checkbox).toBeUndefined();
-    $timeout.flush(4000);
-    expect($rootScope.name).toEqual('a');
-    helper.changeInputValueTo('b');
-    browserTrigger(inputElm, 'blur');
-    $timeout.flush(4000);
-    expect($rootScope.name).toEqual('a');
-    $timeout.flush(2000);
-    expect($rootScope.name).toEqual('b');
-  });
-
-
-  it('should allow selecting different debounce timeouts for each event on checkboxes', function() {
-    var inputElm = helper.compileInput('<input type="checkbox" ng-model="checkbox" ' +
-      'ng-model-options="{ ' +
-        'updateOn: \'default blur\', debounce: { default: 10000, blur: 5000 } }"' +
-      '/>');
-
-    inputElm[0].checked = false;
-    browserTrigger(inputElm, 'click');
-    expect($rootScope.checkbox).toBeUndefined();
-    $timeout.flush(8000);
-    expect($rootScope.checkbox).toBeUndefined();
-    $timeout.flush(3000);
-    expect($rootScope.checkbox).toBe(true);
-    inputElm[0].checked = true;
-    browserTrigger(inputElm, 'click');
-    browserTrigger(inputElm, 'blur');
-    $timeout.flush(3000);
-    expect($rootScope.checkbox).toBe(true);
-    $timeout.flush(3000);
-    expect($rootScope.checkbox).toBe(false);
-  });
-
-
-  it('should allow selecting 0 for non-default debounce timeouts for each event on checkboxes', function() {
-    var inputElm = helper.compileInput('<input type="checkbox" ng-model="checkbox" ' +
-      'ng-model-options="{ ' +
-        'updateOn: \'default blur\', debounce: { default: 10000, blur: 0 } }"' +
-      '/>');
-
-    inputElm[0].checked = false;
-    browserTrigger(inputElm, 'click');
-    expect($rootScope.checkbox).toBeUndefined();
-    $timeout.flush(8000);
-    expect($rootScope.checkbox).toBeUndefined();
-    $timeout.flush(3000);
-    expect($rootScope.checkbox).toBe(true);
-    inputElm[0].checked = true;
-    browserTrigger(inputElm, 'click');
-    browserTrigger(inputElm, 'blur');
-    $timeout.flush(0);
-    expect($rootScope.checkbox).toBe(false);
-  });
-
-
-  it('should inherit model update settings from ancestor elements', function() {
-    var doc = $compile(
-        '<form name="test" ' +
-            'ng-model-options="{ debounce: 10000, updateOn: \'blur\' }" >' +
-          '<input type="text" ng-model="name" name="alias" />' +
-        '</form>')($rootScope);
-    $rootScope.$digest();
-
-    var inputElm = doc.find('input').eq(0);
-    helper.changeGivenInputTo(inputElm, 'a');
-    expect($rootScope.name).toEqual(undefined);
-    browserTrigger(inputElm, 'blur');
-    expect($rootScope.name).toBeUndefined();
-    $timeout.flush(2000);
-    expect($rootScope.name).toBeUndefined();
-    $timeout.flush(9000);
-    expect($rootScope.name).toEqual('a');
-    dealoc(doc);
-  });
-
-
-  it('should flush debounced events when calling $commitViewValue directly', function() {
-    var inputElm = helper.compileInput(
-      '<input type="text" ng-model="name" name="alias" ' +
-        'ng-model-options="{ debounce: 1000 }" />');
-
-    helper.changeInputValueTo('a');
-    expect($rootScope.name).toEqual(undefined);
-    $rootScope.form.alias.$commitViewValue();
-    expect($rootScope.name).toEqual('a');
-  });
-
-
-  it('should cancel debounced events when calling $commitViewValue', function() {
-    var inputElm = helper.compileInput(
-      '<input type="text" ng-model="name" name="alias" ' +
-        'ng-model-options="{ debounce: 1000 }"/>');
-
-    helper.changeInputValueTo('a');
-    $rootScope.form.alias.$commitViewValue();
-    expect($rootScope.name).toEqual('a');
-
-    $rootScope.form.alias.$setPristine();
-    $timeout.flush(1000);
-    expect($rootScope.form.alias.$pristine).toBeTruthy();
-  });
-
-
-  it('should reset input val if rollbackViewValue called during pending update', function() {
-    var inputElm = helper.compileInput(
-      '<input type="text" ng-model="name" name="alias" ' +
-        'ng-model-options="{ updateOn: \'blur\' }" />');
-
-    helper.changeInputValueTo('a');
-    expect(inputElm.val()).toBe('a');
-    $rootScope.form.alias.$rollbackViewValue();
-    expect(inputElm.val()).toBe('');
-    browserTrigger(inputElm, 'blur');
-    expect(inputElm.val()).toBe('');
-  });
-
-
-  it('should allow canceling pending updates', function() {
-    var inputElm = helper.compileInput(
-      '<input type="text" ng-model="name" name="alias" ' +
-        'ng-model-options="{ updateOn: \'blur\' }" />');
-
-    helper.changeInputValueTo('a');
-    expect($rootScope.name).toEqual(undefined);
-    $rootScope.form.alias.$rollbackViewValue();
-    expect($rootScope.name).toEqual(undefined);
-    browserTrigger(inputElm, 'blur');
-    expect($rootScope.name).toEqual(undefined);
-  });
-
-
-  it('should allow canceling debounced updates', function() {
-    var inputElm = helper.compileInput(
-      '<input type="text" ng-model="name" name="alias" ' +
-        'ng-model-options="{ debounce: 10000 }" />');
-
-    helper.changeInputValueTo('a');
-    expect($rootScope.name).toEqual(undefined);
-    $timeout.flush(2000);
-    $rootScope.form.alias.$rollbackViewValue();
-    expect($rootScope.name).toEqual(undefined);
-    $timeout.flush(10000);
-    expect($rootScope.name).toEqual(undefined);
-  });
-
-
-  it('should handle model updates correctly even if rollbackViewValue is not invoked', function() {
-    var inputElm = helper.compileInput(
-      '<input type="text" ng-model="name" name="alias" ' +
-        'ng-model-options="{ updateOn: \'blur\' }" />');
-
-    helper.changeInputValueTo('a');
-    $rootScope.$apply("name = 'b'");
-    browserTrigger(inputElm, 'blur');
-    expect($rootScope.name).toBe('b');
-  });
-
-
-  it('should reset input val if rollbackViewValue called during debounce', function() {
-    var inputElm = helper.compileInput(
-      '<input type="text" ng-model="name" name="alias" ' +
-        'ng-model-options="{ debounce: 2000 }" />');
-
-    helper.changeInputValueTo('a');
-    expect(inputElm.val()).toBe('a');
-    $rootScope.form.alias.$rollbackViewValue();
-    expect(inputElm.val()).toBe('');
-    $timeout.flush(3000);
-    expect(inputElm.val()).toBe('');
-  });
-
-
-  it('should not try to invoke a model if getterSetter is false', function() {
-    var inputElm = helper.compileInput(
-      '<input type="text" ng-model="name" ' +
-        'ng-model-options="{ getterSetter: false }" />');
-
-    var spy = $rootScope.name = jasmine.createSpy('setterSpy');
-    helper.changeInputValueTo('a');
-    expect(spy).not.toHaveBeenCalled();
-    expect(inputElm.val()).toBe('a');
-  });
-
-
-  it('should not try to invoke a model if getterSetter is not set', function() {
-    var inputElm = helper.compileInput('<input type="text" ng-model="name" />');
-
-    var spy = $rootScope.name = jasmine.createSpy('setterSpy');
-    helper.changeInputValueTo('a');
-    expect(spy).not.toHaveBeenCalled();
-    expect(inputElm.val()).toBe('a');
-  });
-
-
-  it('should try to invoke a function model if getterSetter is true', function() {
-    var inputElm = helper.compileInput(
-      '<input type="text" ng-model="name" ' +
-        'ng-model-options="{ getterSetter: true }" />');
-
-    var spy = $rootScope.name = jasmine.createSpy('setterSpy').and.callFake(function() {
-      return 'b';
-    });
-    $rootScope.$apply();
-    expect(inputElm.val()).toBe('b');
-
-    helper.changeInputValueTo('a');
-    expect(inputElm.val()).toBe('b');
-    expect(spy).toHaveBeenCalledWith('a');
-    expect($rootScope.name).toBe(spy);
-  });
-
-
-  it('should assign to non-function models if getterSetter is true', function() {
-    var inputElm = helper.compileInput(
-      '<input type="text" ng-model="name" ' +
-        'ng-model-options="{ getterSetter: true }" />');
-
-    $rootScope.name = 'c';
-    helper.changeInputValueTo('d');
-    expect(inputElm.val()).toBe('d');
-    expect($rootScope.name).toBe('d');
-  });
-
-
-  it('should fail on non-assignable model binding if getterSetter is false', function() {
-    expect(function() {
-      var inputElm = helper.compileInput('<input type="text" ng-model="accessor(user, \'name\')" />');
-    }).toThrowMinErr('ngModel', 'nonassign', 'Expression \'accessor(user, \'name\')\' is non-assignable.');
-  });
-
-
-  it('should not fail on non-assignable model binding if getterSetter is true', function() {
-    var inputElm = helper.compileInput(
-      '<input type="text" ng-model="accessor(user, \'name\')" ' +
-        'ng-model-options="{ getterSetter: true }" />');
-  });
-
-
-  it('should invoke a model in the correct context if getterSetter is true', function() {
-    var inputElm = helper.compileInput(
-      '<input type="text" ng-model="someService.getterSetter" ' +
-        'ng-model-options="{ getterSetter: true }" />');
-
-    $rootScope.someService = {
-      value: 'a',
-      getterSetter: function(newValue) {
-        this.value = newValue || this.value;
-        return this.value;
-      }
-    };
-    spyOn($rootScope.someService, 'getterSetter').and.callThrough();
-    $rootScope.$apply();
-
-    expect(inputElm.val()).toBe('a');
-    expect($rootScope.someService.getterSetter).toHaveBeenCalledWith();
-    expect($rootScope.someService.value).toBe('a');
-
-    helper.changeInputValueTo('b');
-    expect($rootScope.someService.getterSetter).toHaveBeenCalledWith('b');
-    expect($rootScope.someService.value).toBe('b');
-
-    $rootScope.someService.value = 'c';
-    $rootScope.$apply();
-    expect(inputElm.val()).toBe('c');
-    expect($rootScope.someService.getterSetter).toHaveBeenCalledWith();
-  });
-
-
-  it('should assign invalid values to the scope if allowInvalid is true', function() {
-    var inputElm = helper.compileInput('<input type="text" name="input" ng-model="value" maxlength="1" ' +
-                 'ng-model-options="{allowInvalid: true}" />');
-    helper.changeInputValueTo('12345');
-
-    expect($rootScope.value).toBe('12345');
-    expect(inputElm).toBeInvalid();
-  });
-
-
-  it('should not assign not parsable values to the scope if allowInvalid is true', function() {
-    var inputElm = helper.compileInput('<input type="number" name="input" ng-model="value" ' +
-                 'ng-model-options="{allowInvalid: true}" />', {
-      valid: false,
-      badInput: true
-    });
-    helper.changeInputValueTo('abcd');
-
-    expect($rootScope.value).toBeUndefined();
-    expect(inputElm).toBeInvalid();
-  });
-
-
-  it('should update the scope before async validators execute if allowInvalid is true', function() {
-    var inputElm = helper.compileInput('<input type="text" name="input" ng-model="value" ' +
-                 'ng-model-options="{allowInvalid: true}" />');
-    var defer;
-    $rootScope.form.input.$asyncValidators.promiseValidator = function(value) {
-      defer = $q.defer();
-      return defer.promise;
-    };
-    helper.changeInputValueTo('12345');
-
-    expect($rootScope.value).toBe('12345');
-    expect($rootScope.form.input.$pending.promiseValidator).toBe(true);
-    defer.reject();
-    $rootScope.$digest();
-    expect($rootScope.value).toBe('12345');
-    expect(inputElm).toBeInvalid();
-  });
-
-
-  it('should update the view before async validators execute if allowInvalid is true', function() {
-    var inputElm = helper.compileInput('<input type="text" name="input" ng-model="value" ' +
-                 'ng-model-options="{allowInvalid: true}" />');
-    var defer;
-    $rootScope.form.input.$asyncValidators.promiseValidator = function(value) {
-      defer = $q.defer();
-      return defer.promise;
-    };
-    $rootScope.$apply('value = \'12345\'');
-
-    expect(inputElm.val()).toBe('12345');
-    expect($rootScope.form.input.$pending.promiseValidator).toBe(true);
-    defer.reject();
-    $rootScope.$digest();
-    expect(inputElm.val()).toBe('12345');
-    expect(inputElm).toBeInvalid();
-  });
-
-
-  it('should not call ng-change listeners twice if the model did not change with allowInvalid', function() {
-    var inputElm = helper.compileInput('<input type="text" name="input" ng-model="value" ' +
-                 'ng-model-options="{allowInvalid: true}" ng-change="changed()" />');
-    $rootScope.changed = jasmine.createSpy('changed');
-    $rootScope.form.input.$parsers.push(function(value) {
-      return 'modelValue';
-    });
-
-    helper.changeInputValueTo('input1');
-    expect($rootScope.value).toBe('modelValue');
-    expect($rootScope.changed).toHaveBeenCalledOnce();
-
-    helper.changeInputValueTo('input2');
-    expect($rootScope.value).toBe('modelValue');
-    expect($rootScope.changed).toHaveBeenCalledOnce();
   });
 });

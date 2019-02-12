@@ -8,32 +8,40 @@
 Dependency Injection (DI) is a software design pattern that deals with how components get hold of
 their dependencies.
 
-The Angular injector subsystem is in charge of creating components, resolving their dependencies,
+The AngularJS injector subsystem is in charge of creating components, resolving their dependencies,
 and providing them to other components as requested.
 
 
 ## Using Dependency Injection
 
-DI is pervasive throughout Angular. You can use it when defining components or when providing `run`
-and `config` blocks for a module.
+Dependency Injection is pervasive throughout AngularJS. You can use it when defining components
+or when providing `run` and `config` blocks for a module.
 
-- Components such as services, directives, filters, and animations are defined by an injectable
-factory method or constructor function. These components can be injected with "service" and "value"
-components as dependencies.
+- {@link angular.Module#service Services}, {@link angular.Module#directive directives},
+{@link angular.Module#filter filters}, and {@link angular.Module#animation animations} are
+defined by an injectable factory method or constructor function, and can be injected with
+"services", "values", and "constants" as dependencies.
 
-- Controllers are defined by a constructor function, which can be injected with any of the "service"
-and "value" components as dependencies, but they can also be provided with special dependencies. See
-{@link di#controllers Controllers} below for a list of these special dependencies.
+- {@link ng.$controller Controllers} are defined by a constructor function, which can be injected
+with any of the "service" and "value" as dependencies, but they can also be provided with
+"special dependencies". See {@link di#controllers Controllers} below for a list of these
+special dependencies.
 
-- The `run` method accepts a function, which can be injected with "service", "value" and "constant"
-components as dependencies. Note that you cannot inject "providers" into `run` blocks.
+- The {@link angular.Module#run `run`} method accepts a function, which can be injected with
+"services", "values" and, "constants" as dependencies. Note that you cannot inject "providers"
+into `run` blocks.
 
-- The `config` method accepts a function, which can be injected with "provider" and "constant"
-components as dependencies. Note that you cannot inject "service" or "value" components into
-configuration.
+- The {@link angular.Module#config `config`} method accepts a function, which can be injected with
+"providers" and "constants" as dependencies. Note that you cannot inject "services" or
+"values" into configuration.
 
-See {@link module#module-loading-dependencies Modules} for more details about `run` and `config`
-blocks.
+- The {@link angular.Module#provider `provider`} method can only be injected with other "providers".
+However, only those that have been **registered beforehand** can be injected. This is different
+from services, where the order of registration does not matter.
+
+See {@link module#module-loading Modules} for more details about `run` and `config`
+blocks and {@link guide/providers Providers} for more information about the different provider
+types.
 
 
 ### Factory Methods
@@ -100,7 +108,7 @@ Moreover, additional dependencies are made available to Controllers:
 
 ## Dependency Annotation
 
-Angular invokes certain functions (like service factories and controllers) via the injector.
+AngularJS invokes certain functions (like service factories and controllers) via the injector.
 You need to annotate these functions so that the injector knows what services to inject into
 the function. There are three ways of annotating your code with service name information:
 
@@ -204,11 +212,11 @@ angular.module('myApp', [])
     // $rootScope is implicitly injected
   })
   .run(['willBreak', function(willBreak) {
-    // Angular will throw when this runs
+    // AngularJS will throw when this runs
   }]);
 ```
 
-When the `willBreak` service is instantiated, Angular will throw an error because of strict mode.
+When the `willBreak` service is instantiated, AngularJS will throw an error because of strict mode.
 This is useful when using a tool like [ng-annotate](https://github.com/olov/ng-annotate) to
 ensure that all of your application components have annotations.
 
@@ -225,7 +233,7 @@ angular.bootstrap(document, ['myApp'], {
 
 ## Why Dependency Injection?
 
-This section motivates and explains Angular's use of DI. For how to use DI, see above.
+This section motivates and explains AngularJS's use of DI. For how to use DI, see above.
 
 For in-depth discussion about DI, see
 [Dependency Injection](http://en.wikipedia.org/wiki/Dependency_injection) at Wikipedia,
@@ -264,7 +272,7 @@ code that constructs `SomeClass`.
 
 <img class="pull-right" style="padding-left: 3em; padding-bottom: 1em;" src="img/guide/concepts-module-injector.png">
 
-To manage the responsibility of dependency creation, each Angular application has an {@link
+To manage the responsibility of dependency creation, each AngularJS application has an {@link
 angular.injector injector}. The injector is a
 [service locator](http://en.wikipedia.org/wiki/Service_locator_pattern) that is responsible for
 construction and lookup of dependencies.
@@ -290,7 +298,7 @@ myModule.factory('greeter', function($window) {
 ```
 
 Create a new injector that can provide components defined in our `myModule` module and request our
-`greeter` service from the injector. (This is usually done automatically by angular bootstrap).
+`greeter` service from the injector. (This is usually done automatically by AngularJS bootstrap).
 
 ```js
 var injector = angular.injector(['ng', 'myModule']);
@@ -317,7 +325,7 @@ function MyController($scope, greeter) {
 }
 ```
 
-When Angular compiles the HTML, it processes the `ng-controller` directive, which in turn
+When AngularJS compiles the HTML, it processes the `ng-controller` directive, which in turn
 asks the injector to create an instance of the controller and its dependencies.
 
 ```js
@@ -332,6 +340,6 @@ This is the best outcome. The application code simply declares the dependencies 
 having to deal with the injector. This setup does not break the Law of Demeter.
 
 <div class="alert alert-info">
-**Note:** Angular uses
+**Note:** AngularJS uses
 [**constructor injection**](http://misko.hevery.com/2009/02/19/constructor-injection-vs-setter-injection/).
 </div>

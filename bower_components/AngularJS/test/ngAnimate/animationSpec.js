@@ -14,7 +14,7 @@ describe('$$animation', function() {
     $$animationProvider.drivers.length = 0;
   }));
 
-  it("should not run an animation if there are no drivers",
+  it('should not run an animation if there are no drivers',
     inject(function($$animation, $animate, $rootScope) {
 
     element = jqLite('<div></div>');
@@ -27,7 +27,7 @@ describe('$$animation', function() {
     expect(done).toBe(true);
   }));
 
-  it("should not run an animation if no drivers return an animation step function", function() {
+  it('should not run an animation if no drivers return an animation step function', function() {
     module(function($$animationProvider, $provide) {
       $$animationProvider.drivers.push('matiasDriver');
       $provide.value('matiasDriver', function() {
@@ -36,6 +36,9 @@ describe('$$animation', function() {
     });
     inject(function($$animation, $animate, $rootScope) {
       element = jqLite('<div></div>');
+      var parent = jqLite('<div></div>');
+      parent.append(element);
+
       var done = false;
       $$animation(element, 'someEvent').then(function() {
         done = true;
@@ -47,8 +50,8 @@ describe('$$animation', function() {
     });
   });
 
-  describe("drivers", function() {
-    it("should use the first driver that returns a step function", function() {
+  describe('drivers', function() {
+    it('should use the first driver that returns a step function', function() {
       var count = 0;
       var activeDriver;
       module(function($$animationProvider, $provide) {
@@ -111,7 +114,7 @@ describe('$$animation', function() {
         });
       }));
 
-      it("should obtain the element, event, the provided options and the domOperation",
+      it('should obtain the element, event, the provided options and the domOperation',
         inject(function($$animation, $rootScope, $rootElement) {
         $rootElement.append(element);
 
@@ -135,7 +138,7 @@ describe('$$animation', function() {
         expect(domOperationCalled).toBe(true);
       }));
 
-      it("should obtain the classes string which is a combination of className, addClass and removeClass",
+      it('should obtain the classes string which is a combination of className, addClass and removeClass',
         inject(function($$animation, $rootScope, $rootElement) {
 
         element.addClass('blue red');
@@ -154,7 +157,7 @@ describe('$$animation', function() {
       }));
     });
 
-    it("should traverse the drivers in reverse order", function() {
+    it('should traverse the drivers in reverse order', function() {
       var log = [];
       module(function($$animationProvider, $provide) {
         $$animationProvider.drivers.push('first');
@@ -180,7 +183,7 @@ describe('$$animation', function() {
       });
     });
 
-    they("should $prop the animation call if the driver $proped the returned promise",
+    they('should $prop the animation call if the driver $proped the returned promise',
       ['resolve', 'reject'], function(event) {
 
       module(function($$animationProvider, $provide) {
@@ -197,7 +200,11 @@ describe('$$animation', function() {
       });
 
       inject(function($$animation, $rootScope, $animate) {
-        var status, element = jqLite('<div></div>');
+        var status;
+        var element = jqLite('<div></div>');
+        var parent = jqLite('<div></div>');
+        parent.append(element);
+
         var runner = $$animation(element, 'enter');
         runner.then(function() {
             status = 'resolve';
@@ -208,7 +215,11 @@ describe('$$animation', function() {
         // the animation is started
         $rootScope.$digest();
 
-        event === 'resolve' ? runner.end() : runner.cancel();
+        if (event === 'resolve') {
+          runner.end();
+        } else {
+          runner.cancel();
+        }
 
         // the resolve/rejection digest
         $animate.flush();
@@ -218,7 +229,7 @@ describe('$$animation', function() {
       });
     });
 
-    they("should $prop the driver animation when runner.$prop() is called",
+    they('should $prop the driver animation when runner.$prop() is called',
       ['cancel', 'end'], function(method) {
 
       var log = [];
@@ -289,7 +300,7 @@ describe('$$animation', function() {
       }
     }));
 
-    describe("singular", function() {
+    describe('singular', function() {
       beforeEach(module(function($provide) {
         element = jqLite('<div></div>');
         return function($rootElement) {
@@ -515,11 +526,24 @@ describe('$$animation', function() {
       }));
 
 
-      they('should add the preparation class before the $prop-animation is pushed to the queue',
+      they('should only apply the ng-$prop-prepare class if there are a child animations',
         ['enter', 'leave', 'move'], function(animationType) {
         inject(function($$animation, $rootScope, $animate) {
-          var runner = $$animation(element, animationType);
-          expect(element).toHaveClass('ng-' + animationType + '-prepare');
+          var expectedClassName = 'ng-' + animationType + '-prepare';
+
+          $$animation(element, animationType);
+          $rootScope.$digest();
+          expect(element).not.toHaveClass(expectedClassName);
+
+          var child = jqLite('<div></div>');
+          element.append(child);
+
+          $$animation(element, animationType);
+          $$animation(child, animationType);
+          $rootScope.$digest();
+
+          expect(element).not.toHaveClass(expectedClassName);
+          expect(child).toHaveClass(expectedClassName);
         });
       });
 
@@ -527,14 +551,27 @@ describe('$$animation', function() {
       they('should remove the preparation class before the $prop-animation starts',
         ['enter', 'leave', 'move'], function(animationType) {
         inject(function($$animation, $rootScope, $$rAF) {
-          var runner = $$animation(element, animationType);
+          var expectedClassName = 'ng-' + animationType + '-prepare';
+
+          var child = jqLite('<div></div>');
+          element.append(child);
+
+          $$animation(element, animationType);
+          $$animation(child, animationType);
           $rootScope.$digest();
-          expect(element).not.toHaveClass('ng-' + animationType + '-prepare');
+
+          expect(element).not.toHaveClass(expectedClassName);
+          expect(child).toHaveClass(expectedClassName);
+
+          $$rAF.flush();
+
+          expect(element).not.toHaveClass(expectedClassName);
+          expect(child).not.toHaveClass(expectedClassName);
         });
       });
     });
 
-    describe("grouped", function() {
+    describe('grouped', function() {
       var fromElement;
       var toElement;
       var fromAnchors;
@@ -565,7 +602,7 @@ describe('$$animation', function() {
         };
       }));
 
-      it("should group animations together when they have shared anchors and a shared CSS class",
+      it('should group animations together when they have shared anchors and a shared CSS class',
         inject(function($$animation, $rootScope) {
 
         fromElement.addClass('shared-class');
@@ -596,7 +633,7 @@ describe('$$animation', function() {
         assertCompareNodes(toElm, anchors['in']);
       }));
 
-      it("should group animations together and properly match up multiple anchors based on their references",
+      it('should group animations together and properly match up multiple anchors based on their references',
         inject(function($$animation, $rootScope) {
 
         var attr = 'ng-animate-ref';
@@ -628,7 +665,7 @@ describe('$$animation', function() {
         assertCompareNodes(toAnchors[1], anchors[2]['in']);
       }));
 
-      it("should group animations together on the from and to elements if their both contain matching anchors",
+      it('should group animations together on the from and to elements if their both contain matching anchors',
         inject(function($$animation, $rootScope) {
 
         fromElement.addClass('shared-class');
@@ -646,7 +683,7 @@ describe('$$animation', function() {
         assertCompareNodes(toElement, anchors['in']);
       }));
 
-      it("should not group animations into an anchored animation if enter/leave events are NOT used",
+      it('should not group animations into an anchored animation if enter/leave events are NOT used',
         inject(function($$animation, $rootScope, $$rAF) {
 
         fromElement.addClass('shared-class');
@@ -666,7 +703,7 @@ describe('$$animation', function() {
         expect(captureLog.length).toBe(2);
       }));
 
-      it("should not group animations together if a matching pair of anchors is not detected",
+      it('should not group animations together if a matching pair of anchors is not detected',
         inject(function($$animation, $rootScope) {
 
         fromElement.addClass('shared-class');
@@ -682,7 +719,7 @@ describe('$$animation', function() {
         expect(captureLog.length).toBe(2);
       }));
 
-      it("should not group animations together if a matching CSS class is not detected",
+      it('should not group animations together if a matching CSS class is not detected',
         inject(function($$animation, $rootScope) {
 
         fromElement.addClass('even-class');
@@ -698,7 +735,7 @@ describe('$$animation', function() {
         expect(captureLog.length).toBe(2);
       }));
 
-      it("should expose the shared CSS class in the options provided to the driver",
+      it('should expose the shared CSS class in the options provided to the driver',
         inject(function($$animation, $rootScope) {
 
         fromElement.addClass('fresh-class');
@@ -714,7 +751,7 @@ describe('$$animation', function() {
         expect(capturedAnimation.classes).toBe('fresh-class');
       }));
 
-      it("should update the runner methods to the grouped runner methods handled by the driver",
+      it('should update the runner methods to the grouped runner methods handled by the driver',
         inject(function($$animation, $rootScope) {
 
         fromElement.addClass('group-1');
@@ -734,7 +771,7 @@ describe('$$animation', function() {
         expect(runner1.cancel).toBe(runner2.cancel);
       }));
 
-      they("should end the animation if the $prop element is prematurely removed from the DOM during the animation", ['from', 'to'], function(event) {
+      they('should end the animation if the $prop element is prematurely removed from the DOM during the animation', ['from', 'to'], function(event) {
         inject(function($$animation, $rootScope) {
           fromElement.addClass('group-1');
           $$animation(fromElement, 'leave');
@@ -748,12 +785,12 @@ describe('$$animation', function() {
 
           expect(runnerLog).toEqual([]);
 
-          ('from' ? fromElement : toElement).remove();
+          (event === 'from' ? fromElement : toElement).remove();
           expect(runnerLog).toEqual(['end']);
         });
       });
 
-      it("should not end the animation when the `from` animation calls its own leave dom operation",
+      it('should not end the animation when the `from` animation calls its own leave dom operation',
         inject(function($$animation, $rootScope) {
 
         fromElement.addClass('group-1');
@@ -783,7 +820,7 @@ describe('$$animation', function() {
         expect(runnerLog).toEqual([]);
       }));
 
-      it("should not end the animation if any of the anchor elements are removed from the DOM during the animation",
+      it('should not end the animation if any of the anchor elements are removed from the DOM during the animation',
         inject(function($$animation, $rootScope) {
 
         fromElement.addClass('group-1');
@@ -862,7 +899,8 @@ describe('$$animation', function() {
         mockedDriverFn = function(element, method, options, domOperation) {
           return {
             start: function() {
-              return runner = new $$AnimateRunner();
+              runner = new $$AnimateRunner();
+              return runner;
             }
           };
         };
@@ -971,17 +1009,18 @@ describe('$$animation', function() {
         $$animationProvider.drivers[0] = 'dumbDriver';
         $provide.factory('dumbDriver', function($q) {
           return function stepFn() {
-            return $q.when(true);
+            return $q.resolve(true);
           };
         });
       });
       inject(function($$animation, $rootScope, $animate) {
         element.addClass('four');
+        parent.append(element);
 
         var completed = false;
         $$animation(element, 'event', {
-          from: { background: 'red' },
-          to: { background: 'blue', 'font-size': '50px' }
+          from: { height: '100px' },
+          to: { height: '200px', 'font-size': '50px' }
         }).then(function() {
           completed = true;
         });
@@ -992,7 +1031,7 @@ describe('$$animation', function() {
         $rootScope.$digest(); //the runner promise
 
         expect(completed).toBe(true);
-        expect(element.css('background')).toContain('blue');
+        expect(element.css('height')).toContain('200px');
         expect(element.css('font-size')).toBe('50px');
       });
     });
@@ -1028,6 +1067,7 @@ describe('$$animation', function() {
         });
       });
       inject(function($$animation, $rootScope, $animate) {
+        parent.append(element);
         element.addClass('four');
 
         var completed = false;

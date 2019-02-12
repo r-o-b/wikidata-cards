@@ -1,7 +1,16 @@
 'use strict';
 
+// Lots of typed array globals are used in this file and ESLint is
+// not smart enough to understand the `typeof !== 'undefined'` guards.
+/* globals Blob, Uint8ClampedArray, Uint16Array, Uint32Array, Int8Array, Int16Array, Int32Array,
+Float32Array, Float64Array,  */
+
 describe('angular', function() {
-  var element;
+  var element, document;
+
+  beforeEach(function() {
+    document = window.document;
+  });
 
   afterEach(function() {
     dealoc(element);
@@ -10,21 +19,24 @@ describe('angular', function() {
   describe('case', function() {
     it('should change case', function() {
       expect(lowercase('ABC90')).toEqual('abc90');
-      expect(manualLowercase('ABC90')).toEqual('abc90');
       expect(uppercase('abc90')).toEqual('ABC90');
-      expect(manualUppercase('abc90')).toEqual('ABC90');
+    });
+
+    it('should change case of non-ASCII letters', function() {
+      expect(lowercase('Ω')).toEqual('ω');
+      expect(uppercase('ω')).toEqual('Ω');
     });
   });
 
-  describe("copy", function() {
-    it("should return same object", function() {
+  describe('copy', function() {
+    it('should return same object', function() {
       var obj = {};
       var arr = [];
       expect(copy({}, obj)).toBe(obj);
       expect(copy([], arr)).toBe(arr);
     });
 
-    it("should preserve prototype chaining", function() {
+    it('should preserve prototype chaining', function() {
       var GrandParentProto = {};
       var ParentProto = Object.create(GrandParentProto);
       var obj = Object.create(ParentProto);
@@ -34,51 +46,51 @@ describe('angular', function() {
       expect(copy(new Foo()) instanceof Foo).toBe(true);
     });
 
-    it("should copy Date", function() {
+    it('should copy Date', function() {
       var date = new Date(123);
       expect(copy(date) instanceof Date).toBeTruthy();
       expect(copy(date).getTime()).toEqual(123);
       expect(copy(date) === date).toBeFalsy();
     });
 
-    it("should copy RegExp", function() {
-      var re = new RegExp(".*");
+    it('should copy RegExp', function() {
+      var re = new RegExp('.*');
       expect(copy(re) instanceof RegExp).toBeTruthy();
-      expect(copy(re).source).toBe(".*");
+      expect(copy(re).source).toBe('.*');
       expect(copy(re) === re).toBe(false);
     });
 
-    it("should copy literal RegExp", function() {
+    it('should copy literal RegExp', function() {
       var re = /.*/;
       expect(copy(re) instanceof RegExp).toBeTruthy();
-      expect(copy(re).source).toEqual(".*");
+      expect(copy(re).source).toEqual('.*');
       expect(copy(re) === re).toBeFalsy();
     });
 
-    it("should copy RegExp with flags", function() {
+    it('should copy RegExp with flags', function() {
       var re = new RegExp('.*', 'gim');
       expect(copy(re).global).toBe(true);
       expect(copy(re).ignoreCase).toBe(true);
       expect(copy(re).multiline).toBe(true);
     });
 
-    it("should copy RegExp with lastIndex", function() {
+    it('should copy RegExp with lastIndex', function() {
       var re = /a+b+/g;
       var str = 'ab aabb';
       expect(re.exec(str)[0]).toEqual('ab');
       expect(copy(re).exec(str)[0]).toEqual('aabb');
     });
 
-    it("should deeply copy literal RegExp", function() {
+    it('should deeply copy literal RegExp', function() {
       var objWithRegExp = {
         re: /.*/
       };
       expect(copy(objWithRegExp).re instanceof RegExp).toBeTruthy();
-      expect(copy(objWithRegExp).re.source).toEqual(".*");
+      expect(copy(objWithRegExp).re.source).toEqual('.*');
       expect(copy(objWithRegExp.re) === objWithRegExp.re).toBeFalsy();
     });
 
-    it("should copy a Uint8Array with no destination", function() {
+    it('should copy a Uint8Array with no destination', function() {
       if (typeof Uint8Array !== 'undefined') {
         var src = new Uint8Array(2);
         src[1] = 1;
@@ -90,7 +102,7 @@ describe('angular', function() {
       }
     });
 
-    it("should copy a Uint8ClampedArray with no destination", function() {
+    it('should copy a Uint8ClampedArray with no destination', function() {
       if (typeof Uint8ClampedArray !== 'undefined') {
         var src = new Uint8ClampedArray(2);
         src[1] = 1;
@@ -102,7 +114,7 @@ describe('angular', function() {
       }
     });
 
-    it("should copy a Uint16Array with no destination", function() {
+    it('should copy a Uint16Array with no destination', function() {
       if (typeof Uint16Array !== 'undefined') {
         var src = new Uint16Array(2);
         src[1] = 1;
@@ -114,7 +126,7 @@ describe('angular', function() {
       }
     });
 
-    it("should copy a Uint32Array with no destination", function() {
+    it('should copy a Uint32Array with no destination', function() {
       if (typeof Uint32Array !== 'undefined') {
         var src = new Uint32Array(2);
         src[1] = 1;
@@ -126,7 +138,7 @@ describe('angular', function() {
       }
     });
 
-    it("should copy a Int8Array with no destination", function() {
+    it('should copy a Int8Array with no destination', function() {
       if (typeof Int8Array !== 'undefined') {
         var src = new Int8Array(2);
         src[1] = 1;
@@ -138,7 +150,7 @@ describe('angular', function() {
       }
     });
 
-    it("should copy a Int16Array with no destination", function() {
+    it('should copy a Int16Array with no destination', function() {
       if (typeof Int16Array !== 'undefined') {
         var src = new Int16Array(2);
         src[1] = 1;
@@ -150,7 +162,7 @@ describe('angular', function() {
       }
     });
 
-    it("should copy a Int32Array with no destination", function() {
+    it('should copy a Int32Array with no destination', function() {
       if (typeof Int32Array !== 'undefined') {
         var src = new Int32Array(2);
         src[1] = 1;
@@ -162,7 +174,7 @@ describe('angular', function() {
       }
     });
 
-    it("should copy a Float32Array with no destination", function() {
+    it('should copy a Float32Array with no destination', function() {
       if (typeof Float32Array !== 'undefined') {
         var src = new Float32Array(2);
         src[1] = 1;
@@ -174,7 +186,7 @@ describe('angular', function() {
       }
     });
 
-    it("should copy a Float64Array with no destination", function() {
+    it('should copy a Float64Array with no destination', function() {
       if (typeof Float64Array !== 'undefined') {
         var src = new Float64Array(2);
         src[1] = 1;
@@ -240,109 +252,123 @@ describe('angular', function() {
       }
     });
 
-    it("should throw an exception if a Uint8Array is the destination", function() {
+    it('should handle Uint16Array subarray', function() {
+      if (typeof Uint16Array !== 'undefined') {
+        var arr = new Uint16Array(4);
+        arr[1] = 1;
+        var src = arr.subarray(1, 2);
+        var dst = copy(src);
+        expect(dst instanceof Uint16Array).toBeTruthy();
+        expect(dst.length).toEqual(1);
+        expect(dst[0]).toEqual(1);
+        expect(dst).not.toBe(src);
+        expect(dst.buffer).not.toBe(src.buffer);
+      }
+    });
+
+    it('should throw an exception if a Uint8Array is the destination', function() {
       if (typeof Uint8Array !== 'undefined') {
         var src = new Uint8Array();
         var dst = new Uint8Array(5);
         expect(function() { copy(src, dst); })
-          .toThrowMinErr("ng", "cpta", "Can't copy! TypedArray destination cannot be mutated.");
+          .toThrowMinErr('ng', 'cpta', 'Can\'t copy! TypedArray destination cannot be mutated.');
       }
     });
 
-    it("should throw an exception if a Uint8ClampedArray is the destination", function() {
+    it('should throw an exception if a Uint8ClampedArray is the destination', function() {
       if (typeof Uint8ClampedArray !== 'undefined') {
         var src = new Uint8ClampedArray();
         var dst = new Uint8ClampedArray(5);
         expect(function() { copy(src, dst); })
-          .toThrowMinErr("ng", "cpta", "Can't copy! TypedArray destination cannot be mutated.");
+          .toThrowMinErr('ng', 'cpta', 'Can\'t copy! TypedArray destination cannot be mutated.');
       }
     });
 
-    it("should throw an exception if a Uint16Array is the destination", function() {
+    it('should throw an exception if a Uint16Array is the destination', function() {
       if (typeof Uint16Array !== 'undefined') {
         var src = new Uint16Array();
         var dst = new Uint16Array(5);
         expect(function() { copy(src, dst); })
-          .toThrowMinErr("ng", "cpta", "Can't copy! TypedArray destination cannot be mutated.");
+          .toThrowMinErr('ng', 'cpta', 'Can\'t copy! TypedArray destination cannot be mutated.');
       }
     });
 
-    it("should throw an exception if a Uint32Array is the destination", function() {
+    it('should throw an exception if a Uint32Array is the destination', function() {
       if (typeof Uint32Array !== 'undefined') {
         var src = new Uint32Array();
         var dst = new Uint32Array(5);
         expect(function() { copy(src, dst); })
-          .toThrowMinErr("ng", "cpta", "Can't copy! TypedArray destination cannot be mutated.");
+          .toThrowMinErr('ng', 'cpta', 'Can\'t copy! TypedArray destination cannot be mutated.');
       }
     });
 
-    it("should throw an exception if a Int8Array is the destination", function() {
+    it('should throw an exception if a Int8Array is the destination', function() {
       if (typeof Int8Array !== 'undefined') {
         var src = new Int8Array();
         var dst = new Int8Array(5);
         expect(function() { copy(src, dst); })
-          .toThrowMinErr("ng", "cpta", "Can't copy! TypedArray destination cannot be mutated.");
+          .toThrowMinErr('ng', 'cpta', 'Can\'t copy! TypedArray destination cannot be mutated.');
       }
     });
 
-    it("should throw an exception if a Int16Array is the destination", function() {
+    it('should throw an exception if a Int16Array is the destination', function() {
       if (typeof Int16Array !== 'undefined') {
         var src = new Int16Array();
         var dst = new Int16Array(5);
         expect(function() { copy(src, dst); })
-          .toThrowMinErr("ng", "cpta", "Can't copy! TypedArray destination cannot be mutated.");
+          .toThrowMinErr('ng', 'cpta', 'Can\'t copy! TypedArray destination cannot be mutated.');
       }
     });
 
-    it("should throw an exception if a Int32Array is the destination", function() {
+    it('should throw an exception if a Int32Array is the destination', function() {
       if (typeof Int32Array !== 'undefined') {
         var src = new Int32Array();
         var dst = new Int32Array(5);
         expect(function() { copy(src, dst); })
-          .toThrowMinErr("ng", "cpta", "Can't copy! TypedArray destination cannot be mutated.");
+          .toThrowMinErr('ng', 'cpta', 'Can\'t copy! TypedArray destination cannot be mutated.');
       }
     });
 
-    it("should throw an exception if a Float32Array is the destination", function() {
+    it('should throw an exception if a Float32Array is the destination', function() {
       if (typeof Float32Array !== 'undefined') {
         var src = new Float32Array();
         var dst = new Float32Array(5);
         expect(function() { copy(src, dst); })
-          .toThrowMinErr("ng", "cpta", "Can't copy! TypedArray destination cannot be mutated.");
+          .toThrowMinErr('ng', 'cpta', 'Can\'t copy! TypedArray destination cannot be mutated.');
       }
     });
 
-    it("should throw an exception if a Float64Array is the destination", function() {
+    it('should throw an exception if a Float64Array is the destination', function() {
       if (typeof Float64Array !== 'undefined') {
         var src = new Float64Array();
         var dst = new Float64Array(5);
         expect(function() { copy(src, dst); })
-          .toThrowMinErr("ng", "cpta", "Can't copy! TypedArray destination cannot be mutated.");
+          .toThrowMinErr('ng', 'cpta', 'Can\'t copy! TypedArray destination cannot be mutated.');
       }
     });
 
-    it("should throw an exception if an ArrayBuffer is the destination", function() {
+    it('should throw an exception if an ArrayBuffer is the destination', function() {
       if (typeof ArrayBuffer !== 'undefined') {
         var src = new ArrayBuffer(5);
         var dst = new ArrayBuffer(5);
         expect(function() { copy(src, dst); })
-          .toThrowMinErr("ng", "cpta", "Can't copy! TypedArray destination cannot be mutated.");
+          .toThrowMinErr('ng', 'cpta', 'Can\'t copy! TypedArray destination cannot be mutated.');
       }
     });
 
-    it("should deeply copy an array into an existing array", function() {
-      var src = [1, {name:"value"}];
-      var dst = [{key:"v"}];
+    it('should deeply copy an array into an existing array', function() {
+      var src = [1, {name:'value'}];
+      var dst = [{key:'v'}];
       expect(copy(src, dst)).toBe(dst);
-      expect(dst).toEqual([1, {name:"value"}]);
-      expect(dst[1]).toEqual({name:"value"});
+      expect(dst).toEqual([1, {name:'value'}]);
+      expect(dst[1]).toEqual({name:'value'});
       expect(dst[1]).not.toBe(src[1]);
     });
 
-    it("should deeply copy an array into a new array", function() {
-      var src = [1, {name:"value"}];
+    it('should deeply copy an array into a new array', function() {
+      var src = [1, {name:'value'}];
       var dst = copy(src);
-      expect(src).toEqual([1, {name:"value"}]);
+      expect(src).toEqual([1, {name:'value'}]);
       expect(dst).toEqual(src);
       expect(dst).not.toBe(src);
       expect(dst[1]).not.toBe(src[1]);
@@ -350,31 +376,31 @@ describe('angular', function() {
 
     it('should copy empty array', function() {
       var src = [];
-      var dst = [{key: "v"}];
+      var dst = [{key: 'v'}];
       expect(copy(src, dst)).toEqual([]);
       expect(dst).toEqual([]);
     });
 
-    it("should deeply copy an object into an existing object", function() {
-      var src = {a:{name:"value"}};
-      var dst = {b:{key:"v"}};
+    it('should deeply copy an object into an existing object', function() {
+      var src = {a:{name:'value'}};
+      var dst = {b:{key:'v'}};
       expect(copy(src, dst)).toBe(dst);
-      expect(dst).toEqual({a:{name:"value"}});
+      expect(dst).toEqual({a:{name:'value'}});
       expect(dst.a).toEqual(src.a);
       expect(dst.a).not.toBe(src.a);
     });
 
-    it("should deeply copy an object into a non-existing object", function() {
-      var src = {a:{name:"value"}};
+    it('should deeply copy an object into a non-existing object', function() {
+      var src = {a:{name:'value'}};
       var dst = copy(src, undefined);
-      expect(src).toEqual({a:{name:"value"}});
+      expect(src).toEqual({a:{name:'value'}});
       expect(dst).toEqual(src);
       expect(dst).not.toBe(src);
       expect(dst.a).toEqual(src.a);
       expect(dst.a).not.toBe(src.a);
     });
 
-    it("should copy primitives", function() {
+    it('should copy primitives', function() {
       expect(copy(null)).toEqual(null);
       expect(copy('')).toBe('');
       expect(copy('lala')).toBe('lala');
@@ -384,28 +410,28 @@ describe('angular', function() {
 
     it('should throw an exception if a Scope is being copied', inject(function($rootScope) {
       expect(function() { copy($rootScope.$new()); }).
-          toThrowMinErr("ng", "cpws", "Can't copy! Making copies of Window or Scope instances is not supported.");
+          toThrowMinErr('ng', 'cpws', 'Can\'t copy! Making copies of Window or Scope instances is not supported.');
       expect(function() { copy({child: $rootScope.$new()}, {}); }).
-          toThrowMinErr("ng", "cpws", "Can't copy! Making copies of Window or Scope instances is not supported.");
+          toThrowMinErr('ng', 'cpws', 'Can\'t copy! Making copies of Window or Scope instances is not supported.');
       expect(function() { copy([$rootScope.$new()]); }).
-          toThrowMinErr("ng", "cpws", "Can't copy! Making copies of Window or Scope instances is not supported.");
+          toThrowMinErr('ng', 'cpws', 'Can\'t copy! Making copies of Window or Scope instances is not supported.');
     }));
 
     it('should throw an exception if a Window is being copied', function() {
       expect(function() { copy(window); }).
-          toThrowMinErr("ng", "cpws", "Can't copy! Making copies of Window or Scope instances is not supported.");
+          toThrowMinErr('ng', 'cpws', 'Can\'t copy! Making copies of Window or Scope instances is not supported.');
       expect(function() { copy({child: window}); }).
-          toThrowMinErr("ng", "cpws", "Can't copy! Making copies of Window or Scope instances is not supported.");
+          toThrowMinErr('ng', 'cpws', 'Can\'t copy! Making copies of Window or Scope instances is not supported.');
       expect(function() { copy([window], []); }).
-          toThrowMinErr("ng", "cpws", "Can't copy! Making copies of Window or Scope instances is not supported.");
+          toThrowMinErr('ng', 'cpws', 'Can\'t copy! Making copies of Window or Scope instances is not supported.');
     });
 
     it('should throw an exception when source and destination are equivalent', function() {
       var src, dst;
       src = dst = {key: 'value'};
-      expect(function() { copy(src, dst); }).toThrowMinErr("ng", "cpi", "Can't copy! Source and destination are identical.");
+      expect(function() { copy(src, dst); }).toThrowMinErr('ng', 'cpi', 'Can\'t copy! Source and destination are identical.');
       src = dst = [2, 4];
-      expect(function() { copy(src, dst); }).toThrowMinErr("ng", "cpi", "Can't copy! Source and destination are identical.");
+      expect(function() { copy(src, dst); }).toThrowMinErr('ng', 'cpi', 'Can\'t copy! Source and destination are identical.');
     });
 
     it('should not copy the private $$hashKey', function() {
@@ -545,9 +571,8 @@ describe('angular', function() {
     });
 
     it('should copy String() objects', function() {
-      /*jshint -W053 */
+      // eslint-disable-next-line no-new-wrappers
       var obj = new String('foo');
-      /*jshint +W053 */
       var dest = copy(obj);
       expect(dest).not.toBe(obj);
       expect(isObject(dest)).toBe(true);
@@ -555,9 +580,8 @@ describe('angular', function() {
     });
 
     it('should copy Boolean() objects', function() {
-      /*jshint -W053 */
+      // eslint-disable-next-line no-new-wrappers
       var obj = new Boolean(true);
-      /*jshint +W053 */
       var dest = copy(obj);
       expect(dest).not.toBe(obj);
       expect(isObject(dest)).toBe(true);
@@ -565,9 +589,8 @@ describe('angular', function() {
     });
 
     it('should copy Number() objects', function() {
-      /*jshint -W053 */
+      // eslint-disable-next-line no-new-wrappers
       var obj = new Number(42);
-      /*jshint +W053 */
       var dest = copy(obj);
       expect(dest).not.toBe(obj);
       expect(isObject(dest)).toBe(true);
@@ -575,16 +598,41 @@ describe('angular', function() {
     });
 
     it('should copy falsy String/Boolean/Number objects', function() {
-      /*jshint -W053 */
+      /* eslint-disable no-new-wrappers */
       expect(copy(new String('')).valueOf()).toBe('');
       expect(copy(new Boolean(false)).valueOf()).toBe(false);
       expect(copy(new Number(0)).valueOf()).toBe(0);
       expect(copy(new Number(NaN)).valueOf()).toBeNaN();
-      /*jshint +W053 */
+      /* eslint-enable */
     });
+
+    it('should copy source until reaching a given max depth', function() {
+      var source = {a1: 1, b1: {b2: {b3: 1}}, c1: [1, {c2: 1}], d1: {d2: 1}};
+      var dest;
+
+      dest =  copy(source, {}, 1);
+      expect(dest).toEqual({a1:1, b1:'...', c1:'...', d1:'...'});
+
+      dest =  copy(source, {}, 2);
+      expect(dest).toEqual({a1:1, b1:{b2:'...'}, c1:[1,'...'], d1:{d2:1}});
+
+      dest =  copy(source, {}, 3);
+      expect(dest).toEqual({a1: 1, b1: {b2: {b3: 1}}, c1: [1, {c2: 1}], d1: {d2: 1}});
+
+      dest =  copy(source, {}, 4);
+      expect(dest).toEqual({a1: 1, b1: {b2: {b3: 1}}, c1: [1, {c2: 1}], d1: {d2: 1}});
+    });
+
+    they('should copy source and ignore max depth when maxDepth = $prop',
+      [NaN, null, undefined, true, false, -1, 0], function(maxDepth) {
+        var source = {a1: 1, b1: {b2: {b3: 1}}, c1: [1, {c2: 1}], d1: {d2: 1}};
+        var dest =  copy(source, {}, maxDepth);
+        expect(dest).toEqual({a1: 1, b1: {b2: {b3: 1}}, c1: [1, {c2: 1}], d1: {d2: 1}});
+      }
+    );
   });
 
-  describe("extend", function() {
+  describe('extend', function() {
 
     it('should not copy the private $$hashKey', function() {
       var src,dst;
@@ -649,7 +697,7 @@ describe('angular', function() {
 
     it('should copy elements by reference', function() {
       var src = { element: document.createElement('div'),
-        jqObject: jqLite("<p><span>s1</span><span>s2</span></p>").find("span") };
+        jqObject: jqLite('<p><span>s1</span><span>s2</span></p>').find('span') };
       var dst = {};
 
       extend(dst, src);
@@ -677,13 +725,13 @@ describe('angular', function() {
 
 
     it('should replace primitives with objects', function() {
-      var dst = { foo: "bloop" };
-      var src = { foo: { bar: { baz: "bloop" }}};
+      var dst = { foo: 'bloop' };
+      var src = { foo: { bar: { baz: 'bloop' }}};
       merge(dst, src);
       expect(dst).toEqual({
         foo: {
           bar: {
-            baz: "bloop"
+            baz: 'bloop'
           }
         }
       });
@@ -692,12 +740,12 @@ describe('angular', function() {
 
     it('should replace null values in destination with objects', function() {
       var dst = { foo: null };
-      var src = { foo: { bar: { baz: "bloop" }}};
+      var src = { foo: { bar: { baz: 'bloop' }}};
       merge(dst, src);
       expect(dst).toEqual({
         foo: {
           bar: {
-            baz: "bloop"
+            baz: 'bloop'
           }
         }
       });
@@ -915,7 +963,6 @@ describe('angular', function() {
     });
 
     it('should correctly test for keys that are present on Object.prototype', function() {
-      /* jshint -W001 */
       expect(equals({}, {hasOwnProperty: 1})).toBe(false);
       expect(equals({}, {toString: null})).toBe(false);
     });
@@ -960,7 +1007,6 @@ describe('angular', function() {
 
 
     it('should safely compare objects which shadow Object.prototype.hasOwnProperty', function() {
-      /* jshint -W001 */
       var o1 = {
         hasOwnProperty: true,
         a: 1,
@@ -984,7 +1030,7 @@ describe('angular', function() {
 
     function mockCspElement(cspAttrName, cspAttrValue) {
       return spyOn(document, 'querySelector').and.callFake(function(selector) {
-        if (selector == '[' + cspAttrName + ']') {
+        if (selector === '[' + cspAttrName + ']') {
           var html = '<div ' + cspAttrName + (cspAttrValue ? ('="' + cspAttrValue + '" ') : '') + '></div>';
           return jqLite(html)[0];
         }
@@ -992,10 +1038,13 @@ describe('angular', function() {
 
     }
 
-    var originalFunction;
+    var originalPrototype = window.Function.prototype;
 
     beforeEach(function() {
       spyOn(window, 'Function');
+      // Jasmine 2.7+ doesn't support spying on Function, so we have restore the prototype
+      // as Jasmine will use Function internally
+      window.Function.prototype = originalPrototype;
     });
 
     afterEach(function() {
@@ -1208,6 +1257,37 @@ describe('angular', function() {
     });
   });
 
+  describe('isArray', function() {
+
+    it('should return true if passed an `Array`', function() {
+      expect(isArray([])).toBe(true);
+    });
+
+    it('should return true if passed an `Array` from a different window context', function() {
+      var iframe = document.createElement('iframe');
+      document.body.appendChild(iframe);  // No `contentWindow` if not attached to the DOM.
+      var arr = new iframe.contentWindow.Array();
+      document.body.removeChild(iframe);  // Clean up.
+
+      expect(arr instanceof Array).toBe(false);
+      expect(isArray(arr)).toBe(true);
+    });
+
+    it('should return true if passed an object prototypically inherited from `Array`', function() {
+      function FooArray() {}
+      FooArray.prototype = [];
+
+      expect(isArray(new FooArray())).toBe(true);
+    });
+
+    it('should return false if passed non-array objects', function() {
+      expect(isArray(document.body.childNodes)).toBe(false);
+      expect(isArray({length: 0})).toBe(false);
+      expect(isArray({length: 2, 0: 'one', 1: 'two'})).toBe(false);
+    });
+
+  });
+
   describe('isArrayLike', function() {
 
     it('should return false if passed a number', function() {
@@ -1219,7 +1299,7 @@ describe('angular', function() {
     });
 
     it('should return true if passed an object', function() {
-      expect(isArrayLike({0:"test", 1:"bob", 2:"tree", length:3})).toBe(true);
+      expect(isArrayLike({0:'test', 1:'bob', 2:'tree', length:3})).toBe(true);
     });
 
     it('should return true if passed arguments object', function() {
@@ -1284,7 +1364,6 @@ describe('angular', function() {
 
 
     it('should not break if obj is an array we override hasOwnProperty', function() {
-      /* jshint -W001 */
       var obj = [];
       obj[0] = 1;
       obj[1] = 2;
@@ -1299,21 +1378,21 @@ describe('angular', function() {
 
 
     it('should handle JQLite and jQuery objects like arrays', function() {
-      var jqObject = jqLite("<p><span>s1</span><span>s2</span></p>").find("span"),
+      var jqObject = jqLite('<p><span>s1</span><span>s2</span></p>').find('span'),
           log = [];
 
       forEach(jqObject, function(value, key) { log.push(key + ':' + value.innerHTML); });
       expect(log).toEqual(['0:s1', '1:s2']);
 
       log = [];
-      jqObject = jqLite("<pane></pane>");
+      jqObject = jqLite('<pane></pane>');
       forEach(jqObject.children(), function(value, key) { log.push(key + ':' + value.innerHTML); });
       expect(log).toEqual([]);
     });
 
 
     it('should handle NodeList objects like arrays', function() {
-      var nodeList = jqLite("<p><span>a</span><span>b</span><span>c</span></p>")[0].childNodes,
+      var nodeList = jqLite('<p><span>a</span><span>b</span><span>c</span></p>')[0].childNodes,
           log = [];
 
 
@@ -1323,11 +1402,11 @@ describe('angular', function() {
 
 
     it('should handle HTMLCollection objects like arrays', function() {
-      document.body.innerHTML = "<p>" +
-                                  "<a name='x'>a</a>" +
-                                  "<a name='y'>b</a>" +
-                                  "<a name='x'>c</a>" +
-                                "</p>";
+      document.body.innerHTML = '<p>' +
+                                  '<a name=\'x\'>a</a>' +
+                                  '<a name=\'y\'>b</a>' +
+                                  '<a name=\'x\'>c</a>' +
+                                '</p>';
 
       var htmlCollection = document.getElementsByName('x'),
           log = [];
@@ -1336,27 +1415,11 @@ describe('angular', function() {
       expect(log).toEqual(['0:a', '1:c']);
     });
 
-    if (document.querySelectorAll) {
-      it('should handle the result of querySelectorAll in IE8 as it has no hasOwnProperty function', function() {
-        document.body.innerHTML = "<p>" +
-          "<a name='x'>a</a>" +
-          "<a name='y'>b</a>" +
-          "<a name='x'>c</a>" +
-          "</p>";
-
-        var htmlCollection = document.querySelectorAll('[name="x"]'),
-          log = [];
-
-        forEach(htmlCollection, function(value, key) { log.push(key + ':' + value.innerHTML); });
-        expect(log).toEqual(['0:a', '1:c']);
-      });
-    }
-
     it('should handle arguments objects like arrays', function() {
       var args,
           log = [];
 
-      (function() { args = arguments; }('a', 'b', 'c'));
+      (function() { args = arguments; })('a', 'b', 'c');
 
       forEach(args, function(value, key) { log.push(key + ':' + value); });
       expect(log).toEqual(['0:a', '1:b', '2:c']);
@@ -1425,7 +1488,6 @@ describe('angular', function() {
 
 
     it('should safely iterate through objects which shadow Object.prototype.hasOwnProperty', function() {
-      /* jshint -W001 */
       var obj = {
         hasOwnProperty: true,
         a: 1,
@@ -1468,7 +1530,7 @@ describe('angular', function() {
 
 
       it('should follow the ES spec when called with arguments', function() {
-        testForEachSpec(2, (function() { return arguments; }(1,2)));
+        testForEachSpec(2, (function() { return arguments; })(1,2));
       });
 
 
@@ -1478,22 +1540,22 @@ describe('angular', function() {
 
 
       it('should follow the ES spec when called with jQuery/jqLite', function() {
-        testForEachSpec(2, jqLite("<span>a</span><span>b</span>"));
+        testForEachSpec(2, jqLite('<span>a</span><span>b</span>'));
       });
 
 
       it('should follow the ES spec when called with childNodes NodeList', function() {
-        testForEachSpec(2, jqLite("<p><span>a</span><span>b</span></p>")[0].childNodes);
+        testForEachSpec(2, jqLite('<p><span>a</span><span>b</span></p>')[0].childNodes);
       });
 
 
       it('should follow the ES spec when called with getElementsByTagName HTMLCollection', function() {
-        testForEachSpec(2, jqLite("<p><span>a</span><span>b</span></p>")[0].getElementsByTagName("*"));
+        testForEachSpec(2, jqLite('<p><span>a</span><span>b</span></p>')[0].getElementsByTagName('*'));
       });
 
 
       it('should follow the ES spec when called with querySelectorAll HTMLCollection', function() {
-        testForEachSpec(2, jqLite("<p><span>a</span><span>b</span></p>")[0].querySelectorAll("*"));
+        testForEachSpec(2, jqLite('<p><span>a</span><span>b</span></p>')[0].querySelectorAll('*'));
       });
 
 
@@ -1520,8 +1582,8 @@ describe('angular', function() {
         toEqual('asdf1234asdf');
 
       //don't encode unreserved'
-      expect(encodeUriSegment("-_.!~*'(); -_.!~*'();")).
-        toEqual("-_.!~*'();%20-_.!~*'();");
+      expect(encodeUriSegment('-_.!~*\'(); -_.!~*\'();')).
+        toEqual('-_.!~*\'();%20-_.!~*\'();');
 
       //don't encode the rest of pchar'
       expect(encodeUriSegment(':@&=+$, :@&=+$,')).
@@ -1542,8 +1604,8 @@ describe('angular', function() {
         toEqual('asdf1234asdf');
 
       //don't encode unreserved
-      expect(encodeUriQuery("-_.!~*'() -_.!~*'()")).
-        toEqual("-_.!~*'()+-_.!~*'()");
+      expect(encodeUriQuery('-_.!~*\'() -_.!~*\'()')).
+        toEqual('-_.!~*\'()+-_.!~*\'()');
 
       //don't encode the rest of pchar
       expect(encodeUriQuery(':@$, :@$,')).
@@ -1636,8 +1698,8 @@ describe('angular', function() {
 
       expect(function() {
         angularInit(appElement, angular.bootstrap);
-      }).toThrowError(
-        new RegExp('\\[\\$injector:modulerr] Failed to instantiate module doesntexist due to:\\n' +
+      }).toThrowMinErr('$injector', 'modulerr',
+        new RegExp('Failed to instantiate module doesntexist due to:\\n' +
                    '.*\\[\\$injector:nomod] Module \'doesntexist\' is not available! You either ' +
                    'misspelled the module name or forgot to load it\\.')
       );
@@ -1650,9 +1712,8 @@ describe('angular', function() {
 
       expect(function() {
         angular.bootstrap(element);
-      }).toThrowError(
-        /\[ng:btstrpd\] App Already Bootstrapped with this Element '&lt;div class="?ng\-scope"?( ng[0-9]+="?[0-9]+"?)?&gt;'/i
-      );
+      }).toThrowMinErr('ng', 'btstrpd',
+          /App Already Bootstrapped with this Element '&lt;div class="?ng-scope"?( ng\d+="?\d+"?)?&gt;'/i);
 
       dealoc(element);
     });
@@ -1662,9 +1723,7 @@ describe('angular', function() {
       angular.bootstrap(document.getElementsByTagName('html')[0]);
       expect(function() {
         angular.bootstrap(document);
-      }).toThrowError(
-        /\[ng:btstrpd\] App Already Bootstrapped with this Element 'document'/i
-      );
+      }).toThrowMinErr('ng', 'btstrpd', /App Already Bootstrapped with this Element 'document'/i);
 
       dealoc(document);
     });
@@ -1685,10 +1744,109 @@ describe('angular', function() {
 
       dealoc(appElement);
     });
+
+    // Support: IE 9-11 only
+    // IE does not support `document.currentScript` (nor extensions with protocol), so skip tests.
+    if (!msie) {
+      describe('auto bootstrap restrictions', function() {
+
+        function createFakeDoc(attrs, protocol, currentScript) {
+
+          protocol = protocol || 'http:';
+          var origin = protocol + '//something';
+
+          if (currentScript === undefined) {
+            currentScript = document.createElement('script');
+            Object.keys(attrs).forEach(function(key) { currentScript.setAttribute(key, attrs[key]); });
+          }
+
+          // Fake a minimal document object (the actual document.currentScript is readonly).
+          return {
+            currentScript: currentScript,
+            location: {protocol: protocol, origin: origin},
+            createElement: document.createElement.bind(document)
+          };
+        }
+
+        describe('from extensions into extension documents', function() {
+          // Extension URLs are browser-specific, so we must choose a scheme that is supported by the browser to make
+          // sure that the URL is properly parsed.
+          var protocol;
+          var userAgent = window.navigator.userAgent;
+          if (/Firefox\//.test(userAgent)) {
+            protocol = 'moz-extension:';
+          } else if (/Edge\//.test(userAgent)) {
+            protocol = 'ms-browser-extension:';
+          } else if (/Chrome\//.test(userAgent)) {
+            protocol = 'chrome-extension:';
+          } else if (/Safari\//.test(userAgent)) {
+            protocol = 'safari-extension:';
+          } else {
+            protocol = 'browserext:';  // Upcoming standard scheme.
+          }
+
+          it('should bootstrap for same-origin documents', function() {
+            expect(allowAutoBootstrap(createFakeDoc({src: protocol + '//something'}, protocol))).toBe(true);
+          });
+
+          it('should not bootstrap for cross-origin documents', function() {
+            expect(allowAutoBootstrap(createFakeDoc({src: protocol + '//something-else'}, protocol))).toBe(false);
+          });
+
+        });
+
+
+        it('should bootstrap from a script with no source (e.g. src, href or xlink:href attributes)', function() {
+
+          expect(allowAutoBootstrap(createFakeDoc({src: null}))).toBe(true);
+          expect(allowAutoBootstrap(createFakeDoc({href: null}))).toBe(true);
+          expect(allowAutoBootstrap(createFakeDoc({'xlink:href': null}))).toBe(true);
+        });
+
+        it('should not bootstrap from a script with an empty source (e.g. `src=""`)', function() {
+          expect(allowAutoBootstrap(createFakeDoc({src: ''}))).toBe(false);
+          expect(allowAutoBootstrap(createFakeDoc({href: ''}))).toBe(false);
+          expect(allowAutoBootstrap(createFakeDoc({'xlink:href': ''}))).toBe(false);
+        });
+
+
+        it('should not bootstrap from an extension into a non-extension document', function() {
+
+          expect(allowAutoBootstrap(createFakeDoc({src: 'resource://something'}))).toBe(false);
+          expect(allowAutoBootstrap(createFakeDoc({src: 'file://whatever'}))).toBe(true);
+        });
+
+        it('should not bootstrap from an extension into a non-extension document, via SVG script', function() {
+
+          // SVG script tags don't use the `src` attribute to load their source.
+          // Instead they use `href` or the deprecated `xlink:href` attributes.
+
+          expect(allowAutoBootstrap(createFakeDoc({href: 'resource://something'}))).toBe(false);
+          expect(allowAutoBootstrap(createFakeDoc({'xlink:href': 'resource://something'}))).toBe(false);
+
+          expect(allowAutoBootstrap(createFakeDoc({src: 'http://something', href: 'resource://something'}))).toBe(false);
+          expect(allowAutoBootstrap(createFakeDoc({href: 'http://something', 'xlink:href': 'resource://something'}))).toBe(false);
+          expect(allowAutoBootstrap(createFakeDoc({src: 'resource://something', href: 'http://something', 'xlink:href': 'http://something'}))).toBe(false);
+        });
+
+        it('should not bootstrap if the currentScript property has been clobbered', function() {
+
+          var img = document.createElement('img');
+          img.setAttribute('src', '');
+          expect(allowAutoBootstrap(createFakeDoc({}, 'http:', img))).toBe(false);
+        });
+
+        it('should not bootstrap if bootstrapping is disabled', function() {
+          isAutoBootstrapAllowed = false;
+          angularInit(jqLite('<div ng-app></div>')[0], bootstrapSpy);
+          expect(bootstrapSpy).not.toHaveBeenCalled();
+          isAutoBootstrapAllowed = true;
+        });
+      });
+    }
   });
 
-
-  describe('angular service', function() {
+  describe('AngularJS service', function() {
     it('should override services', function() {
       module(function($provide) {
         $provide.value('fake', 'old');
@@ -1722,6 +1880,43 @@ describe('angular', function() {
     });
   });
 
+  describe('isError', function() {
+    function testErrorFromDifferentContext(createError) {
+      var iframe = document.createElement('iframe');
+      document.body.appendChild(iframe);
+      try {
+        var error = createError(iframe.contentWindow);
+        expect(isError(error)).toBe(true);
+      } finally {
+        iframe.parentElement.removeChild(iframe);
+      }
+    }
+
+    it('should not assume objects are errors', function() {
+      var fakeError = { message: 'A fake error', stack: 'no stack here'};
+      expect(isError(fakeError)).toBe(false);
+    });
+
+    it('should detect simple error instances', function() {
+      expect(isError(new Error())).toBe(true);
+    });
+
+    it('should detect errors from another context', function() {
+      testErrorFromDifferentContext(function(win) {
+        return new win.Error();
+      });
+    });
+
+    it('should detect DOMException errors from another context', function() {
+      testErrorFromDifferentContext(function(win) {
+        try {
+          win.document.querySelectorAll('');
+        } catch (e) {
+          return e;
+        }
+      });
+    });
+  });
 
   describe('isRegExp', function() {
     it('should return true for RegExp object', function() {
@@ -1842,9 +2037,9 @@ describe('angular', function() {
     it('version should have full/major/minor/dot/codeName properties', function() {
       expect(version).toBeDefined();
       expect(version.full).toBe('"NG_VERSION_FULL"');
-      expect(version.major).toBe("NG_VERSION_MAJOR");
-      expect(version.minor).toBe("NG_VERSION_MINOR");
-      expect(version.dot).toBe("NG_VERSION_DOT");
+      expect(version.major).toBe('NG_VERSION_MAJOR');
+      expect(version.minor).toBe('NG_VERSION_MINOR');
+      expect(version.dot).toBe('NG_VERSION_DOT');
       expect(version.codeName).toBe('"NG_VERSION_CODENAME"');
     });
   });
@@ -1858,13 +2053,13 @@ describe('angular', function() {
       dealoc(element);
     });
 
-    it("should complain if app module can't be found", function() {
+    it('should complain if app module can\'t be found', function() {
       var element = jqLite('<div>{{1+2}}</div>');
 
       expect(function() {
         angular.bootstrap(element, ['doesntexist']);
-      }).toThrowError(
-          new RegExp('\\[\\$injector:modulerr\\] Failed to instantiate module doesntexist due to:\\n' +
+      }).toThrowMinErr('$injector', 'modulerr',
+          new RegExp('Failed to instantiate module doesntexist due to:\\n' +
                      '.*\\[\\$injector:nomod\\] Module \'doesntexist\' is not available! You either ' +
                      'misspelled the module name or forgot to load it\\.'));
 
@@ -1903,7 +2098,7 @@ describe('angular', function() {
         window.name = 'NG_DEFER_BOOTSTRAP!';
 
         angular.resumeDeferredBootstrap = noop;
-        var spy = spyOn(angular, "resumeDeferredBootstrap");
+        var spy = spyOn(angular, 'resumeDeferredBootstrap');
         injector = angular.bootstrap(element);
         expect(spy).toHaveBeenCalled();
       });
@@ -2065,7 +2260,7 @@ describe('angular', function() {
       var element = $compile('<p>Hello, world!</p>')($rootScope),
           body = $document.find('body')[0],
           expected = [false, false, false, false, false, false, false, true, true],
-          tests = [null, undefined, "string", 1001, {}, 0, false, body, element];
+          tests = [null, undefined, 'string', 1001, {}, 0, false, body, element];
       angular.forEach(tests, function(value, idx) {
         var result = angular.isElement(value);
         expect(typeof result).toEqual('boolean');

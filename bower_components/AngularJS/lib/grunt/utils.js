@@ -1,25 +1,21 @@
 'use strict';
 
 var fs = require('fs');
-var path = require('path');
 var shell = require('shelljs');
 var grunt = require('grunt');
-var spawn = require('child_process').spawn;
-var semver = require('semver');
-
-var _ = require('lodash');
+var spawn = require('npm-run').spawn;
 
 var CSP_CSS_HEADER = '/* Include this file in your html if you are using the CSP mode. */\n\n';
 
 
 module.exports = {
 
-  startKarma: function(config, singleRun, done){
+  startKarma: function(config, singleRun, done) {
     var browsers = grunt.option('browsers');
     var reporters = grunt.option('reporters');
     var noColor = grunt.option('no-colors');
     var port = grunt.option('port');
-    var p = spawn('node', ['node_modules/karma/bin/karma', 'start', config,
+    var p = spawn('karma', ['start', config,
       singleRun ? '--single-run=true' : '',
       reporters ? '--reporters=' + reporters : '',
       browsers ? '--browsers=' + browsers : '',
@@ -28,37 +24,37 @@ module.exports = {
     ]);
     p.stdout.pipe(process.stdout);
     p.stderr.pipe(process.stderr);
-    p.on('exit', function(code){
-      if(code !== 0) grunt.fail.warn("Karma test(s) failed. Exit code: " + code);
+    p.on('exit', function(code) {
+      if (code !== 0) grunt.fail.warn('Karma test(s) failed. Exit code: ' + code);
       done();
     });
   },
 
 
-  updateWebdriver: function(done){
+  updateWebdriver: function(done) {
     if (process.env.TRAVIS) {
       // Skip the webdriver-manager update on Travis, since the browsers will
       // be provided remotely.
       done();
       return;
     }
-    var p = spawn('node', ['node_modules/protractor/bin/webdriver-manager', 'update']);
+    var p = spawn('webdriver-manager', ['update']);
     p.stdout.pipe(process.stdout);
     p.stderr.pipe(process.stderr);
-    p.on('exit', function(code){
-      if(code !== 0) grunt.fail.warn('Webdriver failed to update');
+    p.on('exit', function(code) {
+      if (code !== 0) grunt.fail.warn('Webdriver failed to update');
       done();
     });
   },
 
-  startProtractor: function(config, done){
+  startProtractor: function(config, done) {
     var sauceUser = grunt.option('sauceUser');
     var sauceKey = grunt.option('sauceKey');
     var tunnelIdentifier = grunt.option('capabilities.tunnel-identifier');
     var sauceBuild = grunt.option('capabilities.build');
     var browser = grunt.option('browser');
     var specs = grunt.option('specs');
-    var args = ['node_modules/protractor/bin/protractor', config];
+    var args = [config];
     if (sauceUser) args.push('--sauceUser=' + sauceUser);
     if (sauceKey) args.push('--sauceKey=' + sauceKey);
     if (tunnelIdentifier) args.push('--capabilities.tunnel-identifier=' + tunnelIdentifier);
@@ -69,24 +65,22 @@ module.exports = {
     }
 
 
-    var p = spawn('node', args);
+    var p = spawn('protractor', args);
     p.stdout.pipe(process.stdout);
     p.stderr.pipe(process.stderr);
-    p.on('exit', function(code){
-      if(code !== 0) grunt.fail.warn('Protractor test(s) failed. Exit code: ' + code);
+    p.on('exit', function(code) {
+      if (code !== 0) grunt.fail.warn('Protractor test(s) failed. Exit code: ' + code);
       done();
     });
   },
 
 
-  wrap: function(src, name){
-    src.unshift('src/' + name + '.prefix');
-    src.push('src/' + name + '.suffix');
-    return src;
+  wrap(src, name) {
+    return [`src/${name}.prefix`, ...src, `src/${name}.suffix`];
   },
 
 
-  addStyle: function(src, styles, minify){
+  addStyle: function(src, styles, minify) {
     styles = styles.reduce(processCSS.bind(this), {
       js: [src],
       css: []
@@ -101,22 +95,22 @@ module.exports = {
         js;
       state.css.push(css);
 
-      if(minify){
+      if (minify) {
         css = css
           .replace(/\r?\n/g, '')
           .replace(/\/\*.*?\*\//g, '')
           .replace(/:\s+/g, ':')
           .replace(/\s*\{\s*/g, '{')
           .replace(/\s*\}\s*/g, '}')
-          .replace(/\s*\,\s*/g, ',')
-          .replace(/\s*\;\s*/g, ';');
+          .replace(/\s*,\s*/g, ',')
+          .replace(/\s*;\s*/g, ';');
       }
       //escape for js
       css = css
         .replace(/\\/g, '\\\\')
-        .replace(/'/g, "\\'")
+        .replace(/'/g, '\\\'')
         .replace(/\r?\n/g, '\\n');
-      js = "!window.angular.$$csp().noInlineStyle && window.angular.element(document.head).prepend('<style type=\"text/css\">" + css + "</style>');";
+      js = '!window.angular.$$csp().noInlineStyle && window.angular.element(document.head).prepend(\'<style type="text/css">' + css + '</style>\');';
       state.js.push(js);
 
       return state;
@@ -124,21 +118,31 @@ module.exports = {
   },
 
 
-  process: function(src, NG_VERSION, strict){
+  process: function(src, NG_VERSION, strict) {
     var processed = src
-      .replace(/"NG_VERSION_FULL"/g, NG_VERSION.full)
-      .replace(/"NG_VERSION_MAJOR"/, NG_VERSION.major)
-      .replace(/"NG_VERSION_MINOR"/, NG_VERSION.minor)
-      .replace(/"NG_VERSION_DOT"/, NG_VERSION.patch)
-      .replace(/"NG_VERSION_CDN"/, NG_VERSION.cdn)
-      .replace(/"NG_VERSION_CODENAME"/, NG_VERSION.codeName);
+      .replace(/(['"])NG_VERSION_FULL\1/g, NG_VERSION.full)
+      .replace(/(['"])NG_VERSION_MAJOR\1/, NG_VERSION.major)
+      .replace(/(['"])NG_VERSION_MINOR\1/, NG_VERSION.minor)
+      .replace(/(['"])NG_VERSION_DOT\1/, NG_VERSION.patch)
+      .replace(/(['"])NG_VERSION_CDN\1/, NG_VERSION.cdn)
+      .replace(/(['"])NG_VERSION_CODENAME\1/, NG_VERSION.codeName);
     if (strict !== false) processed = this.singleStrict(processed, '\n\n', true);
     return processed;
   },
 
 
-  build: function(config, fn){
+  build: function(config, fn) {
     var files = grunt.file.expand(config.src);
+    // grunt.file.expand might reorder the list of files
+    // when it is expanding globs, so we use prefix and suffix
+    // fields to ensure that files are at the start of end of
+    // the list (primarily for wrapping in an IIFE).
+    if (config.prefix) {
+      files = grunt.file.expand(config.prefix).concat(files);
+    }
+    if (config.suffix) {
+      files = files.concat(grunt.file.expand(config.suffix));
+    }
     var styles = config.styles;
     var processedStyles;
     //concat
@@ -165,10 +169,10 @@ module.exports = {
   },
 
 
-  singleStrict: function(src, insert){
+  singleStrict: function(src, insert) {
     return src
       .replace(/\s*("|')use strict("|');\s*/g, insert) // remove all file-specific strict mode flags
-      .replace(/(\(function\([^)]*\)\s*\{)/, "$1'use strict';"); // add single strict mode flag
+      .replace(/(\(function\([^)]*\)\s*\{)/, '$1\'use strict\';'); // add single strict mode flag
   },
 
 
@@ -179,10 +183,10 @@ module.exports = {
 
 
   min: function(file, done) {
-    var classPathSep = (process.platform === "win32") ? ';' : ':';
+    var classPathSep = (process.platform === 'win32') ? ';' : ':';
     var minFile = file.replace(/\.js$/, '.min.js');
     var mapFile = minFile + '.map';
-    var mapFileName = mapFile.match(/[^\/]+$/)[0];
+    var mapFileName = mapFile.match(/[^/]+$/)[0];
     var errorFileName = file.replace(/\.js$/, '-errors.json');
     var versionNumber = grunt.config('NG_VERSION').full;
     var compilationLevel = (file === 'build/angular-message-format.js') ?
@@ -191,8 +195,8 @@ module.exports = {
         'java ' +
             this.java32flags() + ' ' +
             this.memoryRequirement() + ' ' +
-            '-cp bower_components/closure-compiler/compiler.jar' + classPathSep +
-            'bower_components/ng-closure-runner/ngcompiler.jar ' +
+            '-cp vendor/closure-compiler/compiler.jar' + classPathSep +
+            'vendor/ng-closure-runner/ngcompiler.jar ' +
             'org.angularjs.closurerunner.NgClosureRunner ' +
             '--compilation_level ' + compilationLevel + ' ' +
             '--language_in ECMASCRIPT5_STRICT ' +
@@ -223,28 +227,28 @@ module.exports = {
 
 
   //returns the 32-bit mode force flags for java compiler if supported, this makes the build much faster
-  java32flags: function(){
-    if (process.platform === "win32") return '';
-    if (shell.exec('java -version -d32 2>&1', {silent: true}).code !== 0) return '';
+  java32flags: function() {
+    if (process.platform === 'win32') return '';
+    if (shell.exec('java -d32 -version 2>&1', {silent: true}).code !== 0) return '';
     return ' -d32 -client';
   },
 
 
   //collects and combines error messages stripped out in minify step
-  collectErrors: function () {
+  collectErrors: function() {
     var combined = {
       id: 'ng',
       generated: new Date().toString(),
       errors: {}
     };
-    grunt.file.expand('build/*-errors.json').forEach(function (file) {
+    grunt.file.expand('build/*-errors.json').forEach(function(file) {
       var errors = grunt.file.readJSON(file),
         namespace;
-      Object.keys(errors).forEach(function (prop) {
+      Object.keys(errors).forEach(function(prop) {
         if (typeof errors[prop] === 'object') {
           namespace = errors[prop];
           if (combined.errors[prop]) {
-            Object.keys(namespace).forEach(function (code) {
+            Object.keys(namespace).forEach(function(code) {
               if (combined.errors[prop][code] && combined.errors[prop][code] !== namespace[code]) {
                 grunt.warn('[collect-errors] Duplicate minErr codes don\'t match!');
               } else {
@@ -269,14 +273,14 @@ module.exports = {
 
 
   //csp connect middleware
-  conditionalCsp: function(){
-    return function(req, res, next){
+  conditionalCsp: function() {
+    return function(req, res, next) {
       var CSP = /\.csp\W/;
 
       if (CSP.test(req.url)) {
-        res.setHeader("X-WebKit-CSP", "default-src 'self';");
-        res.setHeader("X-Content-Security-Policy", "default-src 'self'");
-        res.setHeader("Content-Security-Policy", "default-src 'self'");
+        res.setHeader('X-WebKit-CSP', 'default-src \'self\';');
+        res.setHeader('X-Content-Security-Policy', 'default-src \'self\'');
+        res.setHeader('Content-Security-Policy', 'default-src \'self\'');
       }
       next();
     };
@@ -284,8 +288,8 @@ module.exports = {
 
 
   //rewrite connect middleware
-  rewrite: function(){
-    return function(req, res, next){
+  rewrite: function() {
+    return function(req, res, next) {
       var REWRITE = /\/(guide|api|cookbook|misc|tutorial|error).*$/,
           IGNORED = /(\.(css|js|png|jpg|gif|svg)$|partials\/.*\.html$)/,
           match;
@@ -296,5 +300,19 @@ module.exports = {
       }
       next();
     };
+  },
+
+  // Our Firebase projects are in subfolders, but Travis expects them in the root,
+  // so we need to modify the upload folder path and copy the file into the root
+  firebaseDocsJsonForTravis: function() {
+    var docsScriptFolder = 'scripts/docs.angularjs.org-firebase';
+
+    var fileName = docsScriptFolder + '/firebase.json';
+    var json = grunt.file.readJSON(fileName);
+
+    (json.hosting || (json.hosting = {})).public = 'deploy/docs';
+    (json.functions || (json.functions = {})).source = docsScriptFolder + '/functions';
+
+    grunt.file.write('firebase.json', JSON.stringify(json));
   }
 };

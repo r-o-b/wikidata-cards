@@ -10,17 +10,20 @@ module.exports = function(config, specificOptions) {
     browserDisconnectTimeout: 10000,
     browserDisconnectTolerance: 2,
     browserNoActivityTimeout: 30000,
-
-
+    reporters: ['dots'],
+    specReporter: {
+      maxLogLines: 5,             // limit number of lines logged per test
+      suppressErrorSummary: true, // do not print error summary
+      suppressFailed: false,      // do not print information about failed tests
+      suppressPassed: true,      // do not print information about passed tests
+      suppressSkipped: false,      // do not print information about skipped tests
+      showSpecTiming: false,      // print the time elapsed for each spec
+      failFast: false              // test would finish with error when a first fail occurs.
+    },
     // SauceLabs config for local development.
     sauceLabs: {
       testName: specificOptions.testName || 'AngularJS',
-      startConnect: true,
-      options: {
-        // We need selenium version +2.46 for Firefox 39 and the last selenium version for OS X is 2.45.
-        // TODO: Uncomment when there is a selenium 2.46 available for OS X.
-        // 'selenium-version': '2.46.0'
-      }
+      startConnect: true
     },
 
     // BrowserStack config for local development.
@@ -37,24 +40,32 @@ module.exports = function(config, specificOptions) {
       'SL_Chrome': {
         base: 'SauceLabs',
         browserName: 'chrome',
-        version: '47'
+        version: 'latest'
+      },
+      'SL_Chrome-1': {
+        base: 'SauceLabs',
+        browserName: 'chrome',
+        version: 'latest-1'
       },
       'SL_Firefox': {
         base: 'SauceLabs',
         browserName: 'firefox',
-        version: '43'
+        version: 'latest'
       },
-      'SL_Safari_8': {
+      'SL_Firefox-1': {
+        base: 'SauceLabs',
+        browserName: 'firefox',
+        version: 'latest-1'
+      },
+      'SL_Safari-1': {
         base: 'SauceLabs',
         browserName: 'safari',
-        platform: 'OS X 10.10',
-        version: '8'
+        version: 'latest-1'
       },
-      'SL_Safari_9': {
+      'SL_Safari': {
         base: 'SauceLabs',
         browserName: 'safari',
-        platform: 'OS X 10.11',
-        version: '9'
+        version: 'latest'
       },
       'SL_IE_9': {
         base: 'SauceLabs',
@@ -74,30 +85,46 @@ module.exports = function(config, specificOptions) {
         platform: 'Windows 8.1',
         version: '11'
       },
+      'SL_EDGE': {
+        base: 'SauceLabs',
+        browserName: 'microsoftedge',
+        platform: 'Windows 10',
+        version: 'latest'
+      },
+      'SL_EDGE-1': {
+        base: 'SauceLabs',
+        browserName: 'microsoftedge',
+        platform: 'Windows 10',
+        version: 'latest-1'
+      },
       'SL_iOS': {
-        base: "SauceLabs",
-        browserName: "iphone",
-        platform: "OS X 10.10",
-        version: "8.1"
+        base: 'SauceLabs',
+        browserName: 'iphone',
+        version: 'latest'
+      },
+      'SL_iOS-1': {
+        base: 'SauceLabs',
+        browserName: 'iphone',
+        version: 'latest-1'
       },
 
       'BS_Chrome': {
         base: 'BrowserStack',
         browser: 'chrome',
         os: 'OS X',
-        os_version: 'Yosemite'
+        os_version: 'Sierra'
       },
       'BS_Safari': {
         base: 'BrowserStack',
         browser: 'safari',
         os: 'OS X',
-        os_version: 'Yosemite'
+        os_version: 'Sierra'
       },
       'BS_Firefox': {
         base: 'BrowserStack',
         browser: 'firefox',
         os: 'Windows',
-        os_version: '8'
+        os_version: '10'
       },
       'BS_IE_9': {
         base: 'BrowserStack',
@@ -120,11 +147,23 @@ module.exports = function(config, specificOptions) {
         os: 'Windows',
         os_version: '8.1'
       },
-      'BS_iOS': {
+      'BS_EDGE': {
         base: 'BrowserStack',
-        device: 'iPhone 6',
+        browser: 'edge',
+        os: 'Windows',
+        os_version: '10'
+      },
+      'BS_iOS_10': {
+        base: 'BrowserStack',
+        device: 'iPhone 7',
         os: 'ios',
-        os_version: '8.0'
+        os_version: '10.0'
+      },
+      'BS_iOS_11': {
+        base: 'BrowserStack',
+        device: 'iPhone 8',
+        os: 'ios',
+        os_version: '11.0'
       }
     }
   });
@@ -133,7 +172,6 @@ module.exports = function(config, specificOptions) {
   if (process.env.TRAVIS) {
     var buildLabel = 'TRAVIS #' + process.env.TRAVIS_BUILD_NUMBER + ' (' + process.env.TRAVIS_BUILD_ID + ')';
 
-    config.logLevel = config.LOG_DEBUG;
     // Karma (with socket.io 1.x) buffers by 50 and 50 tests can take a long time on IEs;-)
     config.browserNoActivityTimeout = 120000;
 
@@ -145,6 +183,9 @@ module.exports = function(config, specificOptions) {
     config.sauceLabs.startConnect = false;
     config.sauceLabs.tunnelIdentifier = process.env.TRAVIS_JOB_NUMBER;
     config.sauceLabs.recordScreenshots = true;
+
+    // Try 'websocket' for a faster transmission first. Fallback to 'polling' if necessary.
+    config.transports = ['websocket', 'polling'];
 
     // Debug logging into a file, that we print out at the end of the build.
     config.loggers.push({
@@ -170,8 +211,8 @@ module.exports = function(config, specificOptions) {
     '/someSanitizedUrl',
     '/{{testUrl}}'
   ];
-  var log4js = require('./node_modules/karma/node_modules/log4js');
-  var layouts = require('./node_modules/karma/node_modules/log4js/lib/layouts');
+  var log4js = require('log4js');
+  var layouts = require('log4js/lib/layouts');
   var originalConfigure = log4js.configure;
   log4js.configure = function(log4jsConfig) {
     var consoleAppender = log4jsConfig.appenders.shift();

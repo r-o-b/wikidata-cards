@@ -74,7 +74,8 @@ cardServices.factory('Wiki', function($log, $http, $q) {
                     cmlimit: '200'
                 }
             }).
-            success( function(data, status, headers, config) {
+            then( function(response) {
+                var data = response.data;
                 if (!data.query.categorymembers) { //i.e., if page wasn't found
                     deferred.resolve([]);
                 }
@@ -105,7 +106,7 @@ cardServices.factory('Wiki', function($log, $http, $q) {
             
                 deferred.resolve(arrayOfTitles);
             }).
-            error(deferred.reject);
+            catch(deferred.reject);
         }
         return deferred.promise;
     }
@@ -152,7 +153,8 @@ cardServices.factory('Wiki', function($log, $http, $q) {
                 cmprop: 'title'
             }
         }).
-        success( function(data, status, headers, config) {
+        then( function(response) {
+            var data = response.data;
             var arrayOfObjects = data.query.categorymembers;
             $log.debug("pedia.getSubcats() success with arrayOfObjects: ", arrayOfObjects);
             
@@ -165,7 +167,7 @@ cardServices.factory('Wiki', function($log, $http, $q) {
             $log.debug("pedia.getSubcats() resolving promise with arrayOfTitles == ", arrayOfTitles);
             deferred.resolve(arrayOfTitles);
         }).
-        error(deferred.reject);
+        catch(deferred.reject);
         
         return deferred.promise;
     }
@@ -211,7 +213,8 @@ cardServices.factory('Wiki', function($log, $http, $q) {
                 srlimit: 10
             }
         }).
-        success( function(data, status, headers, config) {
+        then( function(response) {
+            var data=response.data;
             var arrayOfCats = [];
             if (data.error) {
                 $log.warn("Wiki.pedia.getCatSearch(", searchTerm, ") success but server error; data == ", data);
@@ -232,7 +235,7 @@ cardServices.factory('Wiki', function($log, $http, $q) {
             }
             deferred.resolve(arrayOfCats);
         }).
-        error(deferred.reject);
+        catch(deferred.reject);
         
         return deferred.promise;
     }
@@ -283,7 +286,8 @@ cardServices.factory('Wiki', function($log, $http, $q) {
                     redirects: ''
                 }
             }).
-            success( function(data, status, headers, config) {
+            then( function(response) {
+                var data = response.data;
                 if (data.query.pages["-1"]) { //this doesn't handle the case where the page DOES exist but doesn't have any categories (like "Category:Cars"), which is turned into an empty array by _.map
                     pediaGetCatsCache[titleOfPage] = [];
                     deferred.resolve([]);
@@ -300,7 +304,7 @@ cardServices.factory('Wiki', function($log, $http, $q) {
                     deferred.resolve(arrayOfTitles);
                 }
             }).
-            error( function(error) {
+            catch( function(error) {
                 $log.debug("Wiki.pedia.getCats(" + titleOfPage + ") error with error: ", error);
                 pediaGetCatsCache[titleOfPage] = [];
                 deferred.reject(error);

@@ -1,11 +1,14 @@
 'use strict';
 
-var $$AnimationProvider = ['$animateProvider', function($animateProvider) {
+/* exported $$AnimationProvider */
+
+var $$AnimationProvider = ['$animateProvider', /** @this */ function($animateProvider) {
   var NG_ANIMATE_REF_ATTR = 'ng-animate-ref';
 
   var drivers = this.drivers = [];
 
   var RUNNER_STORAGE_KEY = '$$animationRunner';
+  var PREPARE_CLASSES_KEY = '$$animatePrepareClasses';
 
   function setRunner(element, runner) {
     element.data(RUNNER_STORAGE_KEY, runner);
@@ -19,22 +22,23 @@ var $$AnimationProvider = ['$animateProvider', function($animateProvider) {
     return element.data(RUNNER_STORAGE_KEY);
   }
 
-  this.$get = ['$$jqLite', '$rootScope', '$injector', '$$AnimateRunner', '$$HashMap', '$$rAFScheduler',
-       function($$jqLite,   $rootScope,   $injector,   $$AnimateRunner,   $$HashMap,   $$rAFScheduler) {
+  this.$get = ['$$jqLite', '$rootScope', '$injector', '$$AnimateRunner', '$$Map', '$$rAFScheduler', '$$animateCache',
+       function($$jqLite,   $rootScope,   $injector,   $$AnimateRunner,   $$Map,   $$rAFScheduler, $$animateCache) {
 
     var animationQueue = [];
     var applyAnimationClasses = applyAnimationClassesFactory($$jqLite);
 
     function sortAnimations(animations) {
       var tree = { children: [] };
-      var i, lookup = new $$HashMap();
+      var i, lookup = new $$Map();
 
-      // this is done first beforehand so that the hashmap
+      // this is done first beforehand so that the map
       // is filled with a list of the elements that will be animated
       for (i = 0; i < animations.length; i++) {
         var animation = animations[i];
-        lookup.put(animation.domNode, animations[i] = {
+        lookup.set(animation.domNode, animations[i] = {
           domNode: animation.domNode,
+          element: animation.element,
           fn: animation.fn,
           children: []
         });
@@ -52,7 +56,7 @@ var $$AnimationProvider = ['$animateProvider', function($animateProvider) {
 
         var elementNode = entry.domNode;
         var parentNode = elementNode.parentNode;
-        lookup.put(elementNode, entry);
+        lookup.set(elementNode, entry);
 
         var parentEntry;
         while (parentNode) {
@@ -91,7 +95,7 @@ var $$AnimationProvider = ['$animateProvider', function($animateProvider) {
             result.push(row);
             row = [];
           }
-          row.push(entry.fn);
+          row.push(entry);
           entry.children.forEach(function(childEntry) {
             nextLevelEntries++;
             queue.push(childEntry);
@@ -126,8 +130,6 @@ var $$AnimationProvider = ['$animateProvider', function($animateProvider) {
         return runner;
       }
 
-      setRunner(element, runner);
-
       var classes = mergeClasses(element.attr('class'), mergeClasses(options.addClass, options.removeClass));
       var tempClasses = options.tempClasses;
       if (tempClasses) {
@@ -135,11 +137,11 @@ var $$AnimationProvider = ['$animateProvider', function($animateProvider) {
         options.tempClasses = null;
       }
 
-      var prepareClassName;
       if (isStructural) {
-        prepareClassName = 'ng-' + event + PREPARE_CLASS_SUFFIX;
-        $$jqLite.addClass(element, prepareClassName);
+        element.data(PREPARE_CLASSES_KEY, 'ng-' + event + PREPARE_CLASS_SUFFIX);
       }
+
+      setRunner(element, runner);
 
       animationQueue.push({
         // this data is used by the postDigest code and passed into
@@ -180,15 +182,30 @@ var $$AnimationProvider = ['$animateProvider', function($animateProvider) {
         var toBeSortedAnimations = [];
 
         forEach(groupedAnimations, function(animationEntry) {
+          var element = animationEntry.from ? animationEntry.from.element : animationEntry.element;
+          var extraClasses = options.addClass;
+
+          extraClasses = (extraClasses ? (extraClasses + ' ') : '') + NG_ANIMATE_CLASSNAME;
+          var cacheKey = $$animateCache.cacheKey(element[0], animationEntry.event, extraClasses, options.removeClass);
+
           toBeSortedAnimations.push({
-            domNode: getDomNode(animationEntry.from ? animationEntry.from.element : animationEntry.element),
+            element: element,
+            domNode: getDomNode(element),
             fn: function triggerAnimationStart() {
+              var startAnimationFn, closeFn = animationEntry.close;
+
+              // in the event that we've cached the animation status for this element
+              // and it's in fact an invalid animation (something that has duration = 0)
+              // then we should skip all the heavy work from here on
+              if ($$animateCache.containsCachedAnimationWithoutDuration(cacheKey)) {
+                closeFn();
+                return;
+              }
+
               // it's important that we apply the `ng-animate` CSS class and the
               // temporary classes before we do any driver invoking since these
               // CSS classes may be required for proper CSS detection.
               animationEntry.beforeStart();
-
-              var startAnimationFn, closeFn = animationEntry.close;
 
               // in the event that the element was removed before the digest runs or
               // during the RAF sequencing then we should not trigger the animation.
@@ -219,7 +236,32 @@ var $$AnimationProvider = ['$animateProvider', function($animateProvider) {
         // we need to sort each of the animations in order of parent to child
         // relationships. This ensures that the child classes are applied at the
         // right time.
-        $$rAFScheduler(sortAnimations(toBeSortedAnimations));
+        var finalAnimations = sortAnimations(toBeSortedAnimations);
+        for (var i = 0; i < finalAnimations.length; i++) {
+          var innerArray = finalAnimations[i];
+          for (var j = 0; j < innerArray.length; j++) {
+            var entry = innerArray[j];
+            var element = entry.element;
+
+            // the RAFScheduler code only uses functions
+            finalAnimations[i][j] = entry.fn;
+
+            // the first row of elements shouldn't have a prepare-class added to them
+            // since the elements are at the top of the animation hierarchy and they
+            // will be applied without a RAF having to pass...
+            if (i === 0) {
+              element.removeData(PREPARE_CLASSES_KEY);
+              continue;
+            }
+
+            var prepareClassName = element.data(PREPARE_CLASSES_KEY);
+            if (prepareClassName) {
+              $$jqLite.addClass(element, prepareClassName);
+            }
+          }
+        }
+
+        $$rAFScheduler(finalAnimations);
       });
 
       return runner;
@@ -357,10 +399,10 @@ var $$AnimationProvider = ['$animateProvider', function($animateProvider) {
       }
 
       function beforeStart() {
-        element.addClass(NG_ANIMATE_CLASSNAME);
-        if (tempClasses) {
-          $$jqLite.addClass(element, tempClasses);
-        }
+        tempClasses = (tempClasses ? (tempClasses + ' ') : '') + NG_ANIMATE_CLASSNAME;
+        $$jqLite.addClass(element, tempClasses);
+
+        var prepareClassName = element.data(PREPARE_CLASSES_KEY);
         if (prepareClassName) {
           $$jqLite.removeClass(element, prepareClassName);
           prepareClassName = null;
@@ -388,7 +430,7 @@ var $$AnimationProvider = ['$animateProvider', function($animateProvider) {
         }
       }
 
-      function close(rejected) { // jshint ignore:line
+      function close(rejected) {
         element.off('$destroy', handleDestroyedElement);
         removeRunner(element);
 
@@ -400,7 +442,6 @@ var $$AnimationProvider = ['$animateProvider', function($animateProvider) {
           $$jqLite.removeClass(element, tempClasses);
         }
 
-        element.removeClass(NG_ANIMATE_CLASSNAME);
         runner.complete(!rejected);
       }
     };

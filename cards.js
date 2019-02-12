@@ -5,6 +5,7 @@ app.config(function($httpProvider, $locationProvider, $routeProvider, $logProvid
     $httpProvider.defaults.cache = true;
     
     $locationProvider.html5Mode(true);
+    $locationProvider.hashPrefix('');
     
     $logProvider.debugEnabled(false);
     

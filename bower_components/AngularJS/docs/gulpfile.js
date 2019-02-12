@@ -1,14 +1,8 @@
-"use strict";
-
-var fs = require('fs');
-var _ = require('lodash');
-var stripJsonComments = require('strip-json-comments');
+'use strict';
 
 var gulp = require('gulp');
-var log = require('gulp-util').log;
 var concat = require('gulp-concat');
-var jshint = require('gulp-jshint');
-var bower = require('bower');
+var eslint = require('gulp-eslint');
 var Dgeni = require('dgeni');
 var merge = require('event-stream').merge;
 var path = require('canonical-path');
@@ -19,53 +13,56 @@ var rename = require('gulp-rename');
 
 // We indicate to gulp that tasks are async by returning the stream.
 // Gulp can then wait for the stream to close before starting dependent tasks.
-// See clean and bower for async tasks, and see assets and doc-gen for dependent tasks below
+// See clean for an async task, and see assets and doc-gen for dependent tasks below.
 
 var outputFolder = '../build/docs';
-var bowerFolder = 'bower_components';
 
 var src = 'app/src/**/*.js';
 var ignoredFiles = '!src/angular.bind.js';
 var assets = 'app/assets/**/*';
 
 
-var getJshintConfig = function(filepath) {
-    return JSON.parse(stripJsonComments(fs.readFileSync(filepath, {encoding: 'utf-8'})));
+var getMergedEslintConfig = function(filepath) {
+  return {
+    configFile: filepath,
+    baseConfig: '../.eslintrc.json',
+    rules: {
+      // Examples don't run in strict mode; accept that for now.
+      strict: 'off',
+      // Generated examples may miss the final EOL; ignore that.
+      'eol-last': 'off',
+      // Generated files use the system's default linebreak style (e.g. CRLF on Windows)
+      'linebreak-style': 'off',
+      // While alerts would be bad to have in the library or test code,
+      // they're perfectly fine in examples.
+      'no-alert': 'off',
+
+      // The following rules have to be disabled or tweaked because dgeni template wrappers
+      // don't follow them and we have no way to validate only the parts taken
+      // from ngdoc.
+
+      // some dgeni-packages templates generate whitespace-only lines
+      'no-trailing-spaces': ['error', { 'skipBlankLines': true }],
+
+      // dgeni templates use double quotes as string delimiters
+      quotes: 'off'
+    },
+    ignore: false,
+    useEslintrc: false
+  };
 };
 
-var getMergedJshintConfig = function(filepath) {
-  // "extends" doesn't work in configuration passed by an object, we need to do the extending ourselves.
-  var config = getJshintConfig(filepath);
-  var baseConfig = getJshintConfig('../.jshintrc-base');
-  _.merge(config, baseConfig);
-  delete config.extends;
-
-  // Examples don't run in strict mode; accept that for now.
-  config.strict = false;
-
-  return config;
-};
-
-var copyComponent = function(component, pattern, sourceFolder, packageFile) {
+var copyComponent = function(component, pattern, base, sourceFolder, packageFile) {
   pattern = pattern || '/**/*';
-  sourceFolder = sourceFolder || bowerFolder;
-  packageFile = packageFile || 'bower.json';
-  var version = require(path.resolve(sourceFolder,component,packageFile)).version;
+  base = base || '';
+  sourceFolder = sourceFolder || '../node_modules';
+  packageFile = packageFile || 'package.json';
+  var version = require(path.resolve(sourceFolder, component, packageFile)).version;
   return gulp
-    .src(sourceFolder + '/' + component + pattern)
+    .src(sourceFolder + '/' + component + pattern, {base: sourceFolder + '/' + component + '/' + base})
     .pipe(gulp.dest(outputFolder + '/components/' + component + '-' + version));
 };
 
-gulp.task('bower', function() {
-  var bowerTask = bower.commands.install();
-  bowerTask.on('log', function (result) {
-    log('bower:', result.id, result.data.endpoint.name);
-  });
-  bowerTask.on('error', function(error) {
-    log(error);
-  });
-  return bowerTask;
-});
 
 gulp.task('build-app', function() {
   var file = 'docs.js';
@@ -82,7 +79,8 @@ gulp.task('build-app', function() {
     .pipe(gulp.dest(folder));
 });
 
-gulp.task('assets', ['bower'], function() {
+
+gulp.task('assets', function() {
   var JS_EXT = /\.js$/;
   return merge(
     gulp.src(['img/**/*']).pipe(gulp.dest(outputFolder + '/img')),
@@ -99,52 +97,70 @@ gulp.task('assets', ['bower'], function() {
             .pipe(gulp.dest(outputFolder));
         }
       })),
-    copyComponent('bootstrap', '/dist/**/*'),
-    copyComponent('open-sans-fontface'),
-    copyComponent('lunr.js','/*.js'),
-    copyComponent('google-code-prettify'),
-    copyComponent('jquery', '/dist/*.js'),
-    copyComponent('marked', '/**/*.js', '../node_modules', 'package.json')
+    copyComponent('bootstrap', '/dist/css/bootstrap?(.min).css', 'dist'),
+    copyComponent('bootstrap', '/dist/fonts/*', 'dist'),
+    copyComponent('open-sans-fontface', '/fonts/{Regular,Semibold,Bold}/*'),
+    copyComponent('lunr', '/lunr?(.min).js'),
+    copyComponent('google-code-prettify', '/**/{lang-css,prettify}.js'),
+    copyComponent('jquery', '/dist/jquery.js', 'dist'),
+    copyComponent('marked', '/lib/marked.js'),
+    copyComponent('marked', '/marked.min.js')
   );
 });
 
 
-gulp.task('doc-gen', ['bower'], function() {
+gulp.task('doc-gen', function() {
   var dgeni = new Dgeni([require('./config')]);
   return dgeni.generate().catch(function() {
     process.exit(1);
   });
 });
 
-// JSHint the example and protractor test files
-gulp.task('jshint', ['doc-gen'], function() {
-  var examplesConfig = getMergedJshintConfig('../docs/app/test/.jshintrc');
-  // Some tests use `alert` which is not assumed to be available even with `"browser": true`.
-  examplesConfig.globals.alert = false;
 
-  var protractorConfig = getMergedJshintConfig('../docs/app/e2e/.jshintrc');
+// Lint the example and protractor test files
+gulp.task('eslint', ['doc-gen'], function() {
+  var examplesConfig = getMergedEslintConfig('../docs/app/test/.eslintrc.json');
+  // While in source we don't want to assume the browser environment so that we're
+  // compatible with non-browser window implementations like jsdom, it's not necessary
+  // in examples and may look weird to casual readers.
+  examplesConfig.envs = ['browser'];
+
+  var protractorConfig = getMergedEslintConfig('../docs/app/e2e/.eslintrc.json');
+  protractorConfig.rules['no-unused-vars'] = ['error', {
+    vars: 'local',
+    args: 'none',
+    // This variable is declared in code generated by dgeni-packages
+    // and not always used.
+    varsIgnorePattern: '^rootEl$'
+  }];
 
   return merge(
     gulp.src([
       outputFolder + '/examples/**/*.js',
-      '!' + outputFolder + '/examples/**/protractor.js',
+      '!' + outputFolder + '/examples/**/protractor.js'
     ])
-      .pipe(jshint(examplesConfig))
-      .pipe(jshint.reporter('jshint-stylish'))
-      .pipe(jshint.reporter('fail')),
+      // eslint() attaches the lint output to the "eslint" property
+      // of the file object so it can be used by other modules.
+      .pipe(eslint(examplesConfig))
+      // eslint.format() outputs the lint results to the console.
+      // Alternatively use eslint.formatEach() (see Docs).
+      .pipe(eslint.format())
+      // To have the process exit with an error code (1) on
+      // lint error, return the stream and pipe to failAfterError last.
+      .pipe(eslint.failAfterError()),
     gulp.src([
       outputFolder + '/ptore2e/**/*.js',
-      outputFolder + '/examples/**/protractor.js',
+      outputFolder + '/examples/**/protractor.js'
     ])
-      .pipe(jshint(protractorConfig))
-      .pipe(jshint.reporter('jshint-stylish'))
-      .pipe(jshint.reporter('fail'))
+      .pipe(eslint(protractorConfig))
+      .pipe(eslint.format())
+      .pipe(eslint.failAfterError())
   );
 });
 
 
 // The default task that will be run if no task is supplied
-gulp.task('default', ['assets', 'doc-gen', 'build-app', 'jshint']);
+gulp.task('default', ['assets', 'doc-gen', 'build-app', 'eslint']);
 
 gulp.task('watch', function() {
   gulp.watch([src, ignoredFiles, assets], ['assets', 'build-app']);

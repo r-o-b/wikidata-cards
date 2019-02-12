@@ -10,7 +10,7 @@ In this step, you will add a clickable phone image swapper to the phone details 
 
 * The phone details view displays one large image of the current phone and several smaller thumbnail
   images. It would be great if we could replace the large image with any of the thumbnails just by
-  clicking on the desired thumbnail image. Let's have a look at how we can do this with Angular.
+  clicking on the desired thumbnail image. Let's have a look at how we can do this with AngularJS.
 
 
 <div doc-tutorial-reset="12"></div>
@@ -73,7 +73,7 @@ thumbnail image.
 <img class="diagram" src="img/tutorial/tutorial_12.png">
 
 
-# Testing
+## Testing
 
 To verify this new feature, we added two E2E tests. One verifies that `mainImageUrl` is set to the
 first phone image URL by default. The second test clicks on several thumbnail images and verifies
@@ -151,11 +151,11 @@ property to the controller. As previously, we will use a mocked response.
 Our unit tests should now be passing again.
 
 
-# Experiments
+## Experiments
 
 <div></div>
 
-* Similar to the `ngClick` directive, which binds an Angular expression to the `click` event, there
+* Similar to the `ngClick` directive, which binds an AngularJS expression to the `click` event, there
   are built-in directives for all native events, such as `dblclick`, `focus`/`blur`, mouse and key
   events, etc.
 
@@ -176,7 +176,7 @@ Our unit tests should now be passing again.
   Now, whenever you double-click on a thumbnail, an alert pops-up. Pretty annoying!
 
 
-# Summary
+## Summary
 
 With the phone image swapper in place, we are ready for {@link step_13 step 13} to learn an even
 better way to fetch data.

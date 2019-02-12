@@ -13,7 +13,7 @@ if (process.env.BROWSER_PROVIDER === 'browserstack') {
     }),
     capabilitiesForBrowserStack({
       browserName: 'firefox',
-      version: '28'
+      version: '47'
     }),
     capabilitiesForBrowserStack({
       browserName: 'safari',
@@ -33,7 +33,7 @@ if (process.env.BROWSER_PROVIDER === 'browserstack') {
     }),
     capabilitiesForSauceLabs({
       browserName: 'firefox',
-      version: '28'
+      version: '47'
     }),
     capabilitiesForSauceLabs({
       browserName: 'safari',
@@ -54,17 +54,18 @@ function capabilitiesForBrowserStack(capabilities) {
   return {
     'browserstack.user': process.env.BROWSER_STACK_USERNAME,
     'browserstack.key': process.env.BROWSER_STACK_ACCESS_KEY,
-    'browserstack.local' : 'true',
+    'browserstack.local': 'true',
     'browserstack.debug': 'true',
     'browserstack.tunnelIdentifier': process.env.TRAVIS_JOB_NUMBER,
     'tunnelIdentifier': process.env.TRAVIS_JOB_NUMBER,
 
-    'name': 'Angular E2E',
+    'name': 'AngularJS E2E',
     'build': process.env.TRAVIS_BUILD_NUMBER,
 
     'browserName': capabilities.browserName,
     'platform': capabilities.platform,
-    'version': capabilities.version
+    'version': capabilities.version,
+    'elementScrollBehavior': 1
   };
 }
 
@@ -72,11 +73,14 @@ function capabilitiesForSauceLabs(capabilities) {
   return {
     'tunnel-identifier': process.env.TRAVIS_JOB_NUMBER,
 
-    'name': 'Angular E2E',
+    'name': 'AngularJS E2E',
     'build': process.env.TRAVIS_BUILD_NUMBER,
 
     'browserName': capabilities.browserName,
     'platform': capabilities.platform,
-    'version': capabilities.version
+    'version': capabilities.version,
+    'elementScrollBehavior': 1,
+    // Allow e2e test sessions to run for a maximum of 35 minutes, instead of the default 30 minutes.
+    'maxDuration': 2100
   };
 }

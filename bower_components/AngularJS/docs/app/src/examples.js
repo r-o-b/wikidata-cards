@@ -1,8 +1,9 @@
+'use strict';
+
 angular.module('examples', [])
 
-.directive('runnableExample', ['$templateCache', '$document', function($templateCache, $document) {
+.directive('runnableExample', [function() {
   var exampleClassNameSelector = '.runnable-example-file';
-  var doc = $document[0];
   var tpl =
     '<nav class="runnable-example-tabs" ng-if="tabs">' +
     '  <a ng-class="{active:$index==activeTabIndex}"' +
@@ -29,12 +30,12 @@ angular.module('examples', [])
       return function(scope, element) {
         var node = element[0];
         var examples = node.querySelectorAll(exampleClassNameSelector);
-        var tabs = [], now = Date.now();
+        var tabs = [];
         angular.forEach(examples, function(child, index) {
           tabs.push(child.getAttribute('name'));
         });
 
-        if(tabs.length > 0) {
+        if (tabs.length > 0) {
           scope.tabs = tabs;
           scope.$on('tabChange', function(e, index, title) {
             angular.forEach(examples, function(child) {
@@ -101,7 +102,7 @@ angular.module('examples', [])
     },
     controllerAs: 'plnkr',
     template: '<button ng-click="plnkr.open($event)" class="btn pull-right"> <i class="glyphicon glyphicon-edit">&nbsp;</i> Edit in Plunker</button> ',
-    controller: [function() {
+    controller: [function PlnkrOpenerCtrl() {
       var ctrl = this;
 
       ctrl.example = {
@@ -113,7 +114,7 @@ angular.module('examples', [])
 
       ctrl.prepareExampleData = function() {
         if (ctrl.example.manifest) {
-          return $q.when(ctrl.example);
+          return $q.resolve(ctrl.example);
         }
 
         return getExampleData(ctrl.examplePath).then(function(data) {
@@ -137,8 +138,8 @@ angular.module('examples', [])
         var newWindow = clickEvent.ctrlKey || clickEvent.metaKey;
 
         var postData = {
-          'tags[0]': "angularjs",
-          'tags[1]': "example",
+          'tags[0]': 'angularjs',
+          'tags[1]': 'example',
           'private': true
         };
 
@@ -158,16 +159,17 @@ angular.module('examples', [])
 
       };
 
-      // Initialize the example data, so it's ready when clicking the open button.
-      // Otherwise pop-up blockers will prevent a new window from opening
-      ctrl.prepareExampleData(ctrl.example.path);
-
+      ctrl.$onInit = function() {
+        // Initialize the example data, so it's ready when clicking the open button.
+        // Otherwise pop-up blockers will prevent a new window from opening
+        ctrl.prepareExampleData(ctrl.example.path);
+      };
     }]
   };
 }])
 
 .factory('getExampleData', ['$http', '$q', function($http, $q) {
-  return function(exampleFolder){
+  return function(exampleFolder) {
     // Load the manifest for the example
     return $http.get(exampleFolder + '/manifest.json')
       .then(function(response) {
@@ -182,8 +184,8 @@ angular.module('examples', [])
 
               // The manifests provide the production index file but Plunkr wants
               // a straight index.html
-              if (filename === "index-production.html") {
-                filename = "index.html";
+              if (filename === 'index-production.html') {
+                filename = 'index.html';
               }
 
               return {

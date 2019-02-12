@@ -7,7 +7,7 @@
 
 
 In this step, you will learn how to create a layout template and how to build an application that
-has multiple views by adding routing, using an Angular module called {@link ngRoute ngRoute}.
+has multiple views by adding routing, using an AngularJS module called {@link ngRoute ngRoute}.
 
 * When you now navigate to `/index.html`, you are redirected to `/index.html#!/phones` and the phone
   list appears in the browser.
@@ -20,51 +20,35 @@ has multiple views by adding routing, using an Angular module called {@link ngRo
 
 ## Dependencies
 
-The routing functionality added in this step is provided by Angular in the `ngRoute` module, which
-is distributed separately from the core Angular framework.
+The routing functionality added in this step is provided by AngularJS in the `ngRoute` module, which
+is distributed separately from the core AngularJS framework.
 
-Since we are using [Bower][bower] to install client-side dependencies, this step updates the
-`bower.json` configuration file to include the new dependency:
+Since we are using [npm][npm] to install client-side dependencies, this step updates the
+`package.json` configuration file to include the new dependency:
 
 <br />
-**`bower.json`:**
+**`package.json`:**
 
 ```json
 {
   "name": "angular-phonecat",
-  "description": "A starter project for AngularJS",
-  "version": "0.0.0",
-  "homepage": "https://github.com/angular/angular-phonecat",
-  "license": "MIT",
-  "private": true,
+  ...
   "dependencies": {
-    "angular": "1.5.x",
-    "angular-mocks": "1.5.x",
-    "angular-route": "1.5.x",
+    "angular": "1.7.x",
+    "angular-route": "1.7.x",
     "bootstrap": "3.3.x"
-  }
+  },
+  ...
 }
 ```
 
-The new dependency `"angular-route": "1.5.x"` tells bower to install a version of the angular-route
-module that is compatible with version 1.5.x of Angular. We must tell bower to download and install
+The new dependency `"angular-route": "1.7.x"` tells npm to install a version of the angular-route
+module that is compatible with version 1.7.x of AngularJS. We must tell npm to download and install
 this dependency.
 
 ```
 npm install
 ```
-
-<div class="alert alert-info">
-  **Note:** If you have bower installed globally, you can run `bower install`, but for this project
-  we have preconfigured `npm install` to run bower for us.
-</div>
-
-<div class="alert alert-warning">
-  **Warning:** If a new version of Angular has been released since you last ran `npm install`, then
-  you may have a problem with the `bower install` due to a conflict between the versions of
-  angular.js that need to be installed. If you run into this issue, simply delete your
-  `app/bower_components` directory and then run `npm install`.
-</div>
 
 
 ## Multiple Views, Routing and Layout Templates
@@ -79,7 +63,7 @@ This is a template that is common for all views in our application. Other "parti
 then included into this layout template depending on the current "route" — the view that is
 currently displayed to the user.
 
-Application routes in Angular are declared via the {@link ngRoute.$routeProvider $routeProvider},
+Application routes in AngularJS are declared via the {@link ngRoute.$routeProvider $routeProvider},
 which is the provider of the {@link ngRoute.$route $route} service. This service makes it easy to
 wire together controllers, view templates, and the current URL location in the browser. Using this
 feature, we can implement [deep linking][deep-linking], which lets us utilize the browser's history
@@ -105,7 +89,7 @@ feature, we can implement [deep linking][deep-linking], which lets us utilize th
 As you {@link step_07 noticed}, {@link guide/di dependency injection} (DI) is at the core of
 AngularJS, so it's important for you to understand a thing or two about how it works.
 
-When the application bootstraps, Angular creates an injector that will be used to find and inject
+When the application bootstraps, AngularJS creates an injector that will be used to find and inject
 all of the services that are required by your application. The injector itself doesn't know anything
 about what the `$http` or `$route` services do. In fact, the injector doesn't even know about the
 existence of these services, unless it is configured with proper module definitions.
@@ -126,12 +110,12 @@ service, the `$routeProvider` exposes APIs that allow you to define routes for y
   `$routeProvider` into `PhoneListController` at runtime.
 </div>
 
-Angular modules solve the problem of removing global variables from the application and provide a
-way of configuring the injector. As opposed to AMD or require.js modules, Angular modules don't try
-to solve the problem of script load ordering or lazy script fetching. These goals are totally
+AngularJS modules solve the problem of removing global variables from the application and provide a
+way of configuring the injector. As opposed to AMD or require.js modules, AngularJS modules don't
+try to solve the problem of script load ordering or lazy script fetching. These goals are totally
 independent and both module systems can live side-by-side and fulfill their goals.
 
-To deepen your understanding on Angular's DI, see [Understanding Dependency Injection][wiki-di].
+To deepen your understanding on AngularJS's DI, see [Understanding Dependency Injection][wiki-di].
 
 
 ## Template
@@ -146,8 +130,8 @@ into the layout template. This makes it a perfect fit for our `index.html` templ
 ```html
 <head>
   ...
-  <script src="bower_components/angular/angular.js"></script>
-  <script src="bower_components/angular-route/angular-route.js"></script>
+  <script src="lib/angular/angular.js"></script>
+  <script src="lib/angular-route/angular-route.js"></script>
   <script src="app.module.js"></script>
   <script src="app.config.js"></script>
   ...
@@ -164,7 +148,7 @@ into the layout template. This makes it a perfect fit for our `index.html` templ
 We have added four new `<script>` tags in our `index.html` file to load some extra JavaScript files
 into our application:
 
-* `angular-route.js`: Defines the Angular `ngRoute` module, which provides us with routing.
+* `angular-route.js`: Defines the AngularJS `ngRoute` module, which provides us with routing.
 * `app.config.js`: Configures the providers available to our main module (see
   [below](tutorial/step_09#configuring-a-module)).
 * `phone-detail.module.js`: Defines a new module containing a `phoneDetail` component.
@@ -194,7 +178,7 @@ angular.module('phonecatApp', [
 ```
 
 Now, in addition to the core services and directives, we can also configure the `$route` service
-(using it's provider) for our application. In order to be able to quickly locate the configuration
+(using its provider) for our application. In order to be able to quickly locate the configuration
 code, we put it into a separate file and used the `.config` suffix.
 
 <br />
@@ -203,10 +187,8 @@ code, we put it into a separate file and used the `.config` suffix.
 ```js
   angular.
     module('phonecatApp').
-    config(['$locationProvider', '$routeProvider',
-      function config($locationProvider, $routeProvider) {
-        $locationProvider.hashPrefix('!');
-
+    config(['$routeProvider',
+      function config($routeProvider) {
         $routeProvider.
           when('/phones', {
             template: '<phone-list></phone-list>'
@@ -226,22 +208,10 @@ the corresponding services. Here, we use the
 {@link ngRoute.$routeProvider#otherwise $routeProvider.otherwise()} methods to define our
 application routes.
 
-<div class="alert alert-success">
-  <p>
-    We also used {@link $locationProvider#hashPrefix $locationProvider.hashPrefix()} to set the
-    hash-prefix to `!`. This prefix will appear in the links to our client-side routes, right after
-    the hash (`#`) symbol and before the actual path (e.g. `index.html#!/some/path`).
-  </p>
-  <p>
-    Setting a prefix is not necessary, but it is considered a good practice (for reasons that are
-    outside the scope of this tutorial). `!` is the most commonly used prefix.
-  </p>
-</div>
-
 Our routes are defined as follows:
 
 * `when('/phones')`: Determines the view that will be shown, when the URL hash fragment is
-  `/phones`. According to the specified template, Angular will create an instance of the `phoneList`
+  `/phones`. According to the specified template, AngularJS will create an instance of the `phoneList`
   component to manage the view. Note that this is the same markup that we used to have in the
   `index.html` file.
 
@@ -260,6 +230,25 @@ Note the use of the `:phoneId` parameter in the second route declaration. The `$
 the route declaration — `'/phones/:phoneId'` — as a template that is matched against the current
 URL. All variables defined with the `:` prefix are extracted into the (injectable)
 {@link ngRoute.$routeParams $routeParams} object.
+
+<div class="alert alert-info">
+  <p>
+    You may have noticed, that &mdash; while the configured route paths start with `/` (e.g.
+    `/phones`) &mdash; the URLs used in templates start with `#!/` (e.g. `#!/phones`).
+  </p>
+  <p>
+    Without getting into much detail, AngularJS (by default) uses the hash part of the URL (i.e.
+    what comes after the hash (`#`) symbol) to determine the current route. In addition to that, you
+    can also specify a {@link $locationProvider#hashPrefix hash-prefix} (`!` by default) that needs
+    to appear after the hash symbol in order for AngularJS to consider the value an "AngularJS path"
+    and process it (for example, try to match it to a route).
+  </p>
+  <p>
+    You can find out more about how all this works in the [Using $location](guide/$location) section
+    of the Developer Guide. But all you need to know for now, is that the URLs to our various routes
+    should be prefixed with `#!`.
+  </p>
+</div>
 
 
 ## The `phoneDetail` Component
@@ -324,17 +313,17 @@ modularity.
 
 The takeaway here is:
 
-* Always be explicit about the dependecies of a sub-module. Do not rely on dependencies inherited
+* Always be explicit about the dependencies of a sub-module. Do not rely on dependencies inherited
   from a parent module (because that parent module might not be there some day).
 
 <div class="alert alert-success">
-  Declaring the same dependency in multiple modules does not incur extra "cost", because Angular
+  Declaring the same dependency in multiple modules does not incur extra "cost", because AngularJS
   will still load each dependency once. For more info on modules and their dependencies take a look
   at the [Modules](guide/module) section of the Developer Guide.
 </div>
 
 
-# Testing
+## Testing
 
 Since some of our modules depend on {@link ngRoute ngRoute} now, it is necessary to update the Karma
 configuration file with angular-route. Other than that, the unit tests should (still) pass without
@@ -345,8 +334,8 @@ any modification.
 
 ```js
     files: [
-      'bower_components/angular/angular.js',
-      'bower_components/angular-route/angular-route.js',
+      'lib/angular/angular.js',
+      'lib/angular-route/angular-route.js',
       ...
     ],
 ```
@@ -363,7 +352,7 @@ various URLs and verifying that the correct view was rendered.
 
   it('should redirect `index.html` to `index.html#!/phones', function() {
     browser.get('index.html');
-    expect(browser.getLocationAbsUrl()).toBe('/phones');
+    expect(browser.getCurrentUrl()).toContain('index.html#!/phones');
   });
 
   ...
@@ -398,11 +387,11 @@ various URLs and verifying that the correct view was rendered.
 You can now rerun `npm run protractor` to see the tests run (and hopefully pass).
 
 
-# Experiments
+## Experiments
 
 <div></div>
 
-* Try to add a `{{$ctrl.phoneId}` binding in the template string for the phone details view:
+* Try to add a `{{$ctrl.phoneId}}` binding in the template string for the phone details view:
 
   ```js
   when('/phones/:phoneId', {
@@ -415,7 +404,7 @@ You can now rerun `npm run protractor` to see the tests run (and hopefully pass)
   component isolation at work!
 
 
-# Summary
+## Summary
 
 With the routing set up and the phone list view implemented, we are ready to go to
 {@link step_10 step 10} and implement a proper phone details view.
@@ -424,6 +413,6 @@ With the routing set up and the phone list view implemented, we are ready to go 
 <ul doc-tutorial-nav="9"></ul>
 
 
-[bower]: http://bower.io
 [deep-linking]: https://en.wikipedia.org/wiki/Deep_linking
+[npm]: https://www.npmjs.com/
 [wiki-di]: https://github.com/angular/angular.js/wiki/Understanding-Dependency-Injection

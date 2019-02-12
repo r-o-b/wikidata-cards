@@ -149,14 +149,15 @@ wikidataService.factory('WD', function($log, $http, $q) {
             getIdCache[term];
             getIdCache[term] = deferred.promise;
             $http.get(urlBase + term + '/id').
-            success( function(data, status, headers, config) {
+            then( function(response) {
+                var data = resonse.data;
                 var theId = data;
                 $log.debug("Wiki.data.getId(" + term + ") success id we're looking for is: " + theId);
                 //save to cache
                 getIdCache[term] = theId;
                 deferred.resolve(theId);
             }).
-            error(deferred.reject);
+            catch(deferred.reject);
         }
         return deferred.promise;
     }
@@ -212,7 +213,8 @@ wikidataService.factory('WD', function($log, $http, $q) {
                 }
                 
                 $http.get(urlBase + id + '/labels/').
-                success( function(data, status, headers, config) {
+                then( function(data) {
+                    var data=reponse.data;
                     //$log.debug("data.getLabel() success for id == " + id + " with data == ", data);
                     var theLabel = data;
                     if ( idType == "entity" ) {
@@ -224,7 +226,7 @@ wikidataService.factory('WD', function($log, $http, $q) {
                     //$log.debug("data.getLabel() success for id == " + id + " added label " + theLabel);
                     deferred.resolve(theLabel);
                 }).
-                error(deferred.reject);
+                catch(deferred.reject);
             }
         } else {
             //if argument was NOT in format Q###
@@ -273,7 +275,8 @@ wikidataService.factory('WD', function($log, $http, $q) {
 
         $log.debug("WD.data.getObjects() newTermArray: ", newTermArray);
         $http.get( urlBase + encodeURIComponent(newTermArray.join("|")) ).
-        success( function(data, status, headers, config) {
+        then( function(response) {
+            var data=response.data;
             $log.debug("Wiki.data.getObjects() success start with data == ", data);
             //rb +1 to handle case of single entity object requested, in which case there isn't a wrapper object...
             var theObjects = Array.isArray(data) ? data : [data];
@@ -281,7 +284,7 @@ wikidataService.factory('WD', function($log, $http, $q) {
             theObjects = _.filter(theObjects, 'id'); //if a term wasn't found, the object that tells us that doesn't have an id property like the 'real' results
             deferred.resolve(theObjects);
         }).
-        error( function(error) {
+        catch( function(error) {
             $log.debug("Wiki.data.getObjects() $http error: ", error);
             deferred.reject(error);
         });

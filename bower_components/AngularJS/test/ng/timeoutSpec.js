@@ -161,11 +161,11 @@ describe('$timeout', function() {
 
     it('should delegate exception to the $exceptionHandler service', inject(
         function($timeout, $exceptionHandler) {
-      $timeout(function() { throw "Test Error"; });
+      $timeout(function() { throw 'Test Error'; });
       expect($exceptionHandler.errors).toEqual([]);
 
       $timeout.flush();
-      expect($exceptionHandler.errors).toEqual(["Test Error"]);
+      expect($exceptionHandler.errors).toEqual(['Test Error', 'Possibly unhandled rejection: Test Error']);
     }));
 
 
@@ -173,7 +173,7 @@ describe('$timeout', function() {
         function($timeout, $rootScope) {
       var applySpy = spyOn($rootScope, '$apply').and.callThrough();
 
-      $timeout(function() { throw "Test Error"; });
+      $timeout(function() { throw 'Test Error'; });
       expect(applySpy).not.toHaveBeenCalled();
 
       $timeout.flush();
@@ -183,7 +183,7 @@ describe('$timeout', function() {
 
     it('should reject the timeout promise when an exception is thrown in the timeout callback',
         inject(function($timeout, log) {
-      var promise = $timeout(function() { throw "Some Error"; });
+      var promise = $timeout(function() { throw 'Some Error'; });
 
       promise.then(log.fn('success'), function(reason) { log('error: ' + reason); });
       $timeout.flush();
@@ -216,7 +216,7 @@ describe('$timeout', function() {
       // $browser.defer.cancel is only called on cancel if the deferred object is still referenced
       var cancelSpy = spyOn($browser.defer, 'cancel').and.callThrough();
 
-      var promise = $timeout(function() { throw "Test Error"; }, 0, false);
+      var promise = $timeout(function() { throw 'Test Error'; }, 0, false);
       $timeout.flush();
 
       expect(cancelSpy).not.toHaveBeenCalled();
@@ -238,7 +238,7 @@ describe('$timeout', function() {
       $timeout(task2);
       promise3 = $timeout(task3, 333);
       promise4 = $timeout(333);
-      promise3.then(task4);
+      promise3.then(task4, noop);
 
       $timeout.cancel(promise1);
       $timeout.cancel(promise3);
@@ -280,8 +280,14 @@ describe('$timeout', function() {
     }));
 
 
-    it('should not throw a runtime exception when given an undefined promise', inject(function($timeout) {
+    it('should not throw an error when given an undefined promise', inject(function($timeout) {
       expect($timeout.cancel()).toBe(false);
+    }));
+
+
+    it('should throw an error when given a non-$timeout promise', inject(function($timeout) {
+      var promise = $timeout(noop).then(noop);
+      expect(function() { $timeout.cancel(promise); }).toThrowMinErr('$timeout', 'badprom');
     }));
 
 
@@ -298,6 +304,17 @@ describe('$timeout', function() {
       // Promise deferred object should already be removed from the list and not cancellable again
       $timeout.cancel(promise);
       expect(cancelSpy).toHaveBeenCalledOnce();
+    }));
+
+
+    it('should not trigger digest when cancelled', inject(function($timeout, $rootScope, $browser) {
+      var watchSpy = jasmine.createSpy('watchSpy');
+      $rootScope.$watch(watchSpy);
+
+      var t = $timeout();
+      $timeout.cancel(t);
+      expect(function() {$browser.defer.flush();}).toThrowError('No deferred tasks to be flushed');
+      expect(watchSpy).not.toHaveBeenCalled();
     }));
   });
 });
