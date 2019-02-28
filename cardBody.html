@@ -15,6 +15,7 @@
         <li ng-repeat="eachProp in card['quantity']" class="list-group-item">
             {{eachProp.labels | capFirst}}: {{eachProp.value[0].amount}}
         </li>
+        <li ng-if="debugMode === 2" class="list-group-item debug">Time:</li>
         <li ng-repeat="eachProp in card['time']" class="list-group-item">
             {{eachProp.labels | capFirst}}: 
             <time-item></time-item>

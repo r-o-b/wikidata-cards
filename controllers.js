@@ -161,7 +161,7 @@ app.controller("MainController", function($scope, $location, $timeout, $log, $ht
         var hasDescription = cardObject.descriptions !== "";
         var numClaims = Object.keys(cardObject.claims).length;
         var hasClaims = numClaims !== 0 && !(numClaims === 1 && cardObject.claims.P646);
-        var isNotDisambig = cardObject.descriptions !== "Wikimedia disambiguation page";
+        var isNotDisambig = cardObject.descriptions !== "Wikimedia disambiguation page" && cardObject.descriptions !== "Wikipedia disambiguation page";
         return (hasDescription || hasClaims) && isNotDisambig;
     }
     

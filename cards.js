@@ -135,9 +135,26 @@ app.directive('wikiLink', function() {
             wikiquote: "Wikiquote",
             wikisource: "Wikisource",
             wikivoyage: "Wikivoyage",
-            simplewiki: "Simple"
+            simplewiki: "Simple",
+            portal: "Portal",
+            outline: "Outline",
+            history: "History",
+            geography: "Geography"
         };
-        var domain = href.includes('simple.wikipedia') ? 'simplewiki' : href.substring(href.indexOf('.')+1, href.indexOf('.org'));
+        //usually
+        var domain = href.substring(href.indexOf('.')+1, href.indexOf('.org'));
+        //except
+        if (href.includes('simple.wikipedia')) {
+            domain = 'simplewiki';
+        } else if  (href.includes('wikipedia.org/wiki/Portal:')) {
+            domain = 'portal';
+        } else if  (href.includes('wikipedia.org/wiki/Outline of ')) {
+            domain = 'outline';
+        } else if  (href.includes('wikipedia.org/wiki/History of ')) {
+            domain = 'history';
+        } else if  (href.includes('wikipedia.org/wiki/Geography')) {
+            domain = 'geography';
+        }
         return siteTrans[domain] || "Wiki";
     }
     
@@ -229,6 +246,7 @@ app.directive('displayWikiLinks', function() {
 app.directive('timeItem', function() {
     
     function formatTimeVal(propObject) {
+        
         /**
          * for gregorian 3, an example is Universe (Q1) P580 is "-13798000000-00-00T00:00:00Z"
          * maybe I can use gregorian2 for now?
@@ -314,6 +332,17 @@ app.directive('timeItem', function() {
         }
         
         /**
+         * approximate year
+         * for example, Clavichord (Q191823) has inception "+1200-00-00T00:00:00Z"
+         * @example
+         * julian7("+1200-00-00T00:00:00Z")      // => "12. century"
+         */
+        function julian7(val) {
+            var approxYear = val.substring(1, 3);
+            return  approxYear + ". century";
+        }
+        
+        /**
          * for example, "Great Pyramid of Giza", claim P571, is "-2560-00-00T00:00:00Z"
          * for example, "Adrian II" (Q173995) DOB is "+0792-00-00T00:00:00Z"
          * @example
@@ -362,6 +391,7 @@ app.directive('timeItem', function() {
                 "11": gregorian11
             },
             "Q1985786": {
+                "7": julian7,
                 "9": julian9,
                 "10": julian10,
                 "11": julian11
@@ -436,7 +466,8 @@ app.directive('cardImage', function($q, $log, Wiki, WD, SynonymService, CommonsS
                     var ioSoPoFoLabels = _.union( ioLabels, soLabels, poLabels, foLabels);
                     var entityLabel = eachRawCard.labels;
                     var allLabelsToMatch = ioSoPoFoLabels.push( entityLabel ); //for example, will find glyph for ?q=Address and ?q=Binary
-                    // console.log("getBestImage() allLabelsToMatch: ", allLabelsToMatch);
+                    // it's intentional that allLabelsToMatch isn't used
+                    //console.log("getBestImage() ioSoPoFoLabels: ", ioSoPoFoLabels);
                     
                     var glyph = SynonymService.findSynOrGlyphMatch(ioSoPoFoLabels);
                     if (glyph) {
@@ -463,7 +494,7 @@ app.directive('cardImage', function($q, $log, Wiki, WD, SynonymService, CommonsS
          *   P18 - ALL 5 of "Torah books"
          *   P935 - ??? there are some entities listed in cardServices.js as having that property, but probably they all have P18 as well
          *   sitelinks.commonswiki - ???
-         *   P373 - in "Continents", Q538 (Oceania) and Q5107 (Continent) have P373 but not P18 or P935 oe sitelinks.commonswiki
+         *   P373 - in "Continents", Q538 (Oceania) and Q5107 (Continent) have P373 but not P18 or P935 or sitelinks.commonswiki
          *   none of the above - "Little House books" should all just show default glyph; "Defunct prisons in Iowa" only has 1 card, and it should show default glyph
          * others with a good mix:
          *   "Museums in Madison, Wisconsin"
@@ -488,6 +519,7 @@ app.directive('cardImage', function($q, $log, Wiki, WD, SynonymService, CommonsS
              * imageP18( {'claims': {'P18': [ 'mainsnak':{'dataValue':'XXXXXX'} ] } } )     // promises YYYYYYYY
              */
             function imageP18(wdObject) {
+                //console.log("imageP18() start");
                 var p18 = _.get( wdObject, 'claims.P18.value.0' );
                 if (!p18) {
                     return Promise.reject();
@@ -506,6 +538,7 @@ app.directive('cardImage', function($q, $log, Wiki, WD, SynonymService, CommonsS
              * @return {Promise}
              */
             function imageP935(wdObject) {
+                //console.log("imageP935() start");
                 var p935 = _.get( wdObject, 'claims.P935.value.0' );
                 if (!p935) {
                     return Promise.reject();
@@ -524,6 +557,7 @@ app.directive('cardImage', function($q, $log, Wiki, WD, SynonymService, CommonsS
              * @return {Promise}
              */
             function imageSitelinks(wdObject) {
+                //console.log("imageSitelinks() start");
                 var commonsTitle = WD.data.getCommonsTitle(wdObject);
                 $log.debug("getBestImage() imageSiteLinks() commonsTitle == " + commonsTitle);
                 if (!commonsTitle) {
@@ -550,6 +584,7 @@ app.directive('cardImage', function($q, $log, Wiki, WD, SynonymService, CommonsS
              * @return {Promise}
              */
             function imageP373(wdObject) {
+                //console.log("imageP373() start");
                 var p373 = _.get( wdObject, 'claims.P373.value.0' );
                 if (!p373) {
                     return Promise.reject();
@@ -613,6 +648,7 @@ app.directive('cardBody', function($q, $log, WD) {
             forScope["monolingualtext"] = [];
             forScope["commonsMedia"] = [];
             forScope["url"] = [];
+            forScope["math"] = []; // I plan to display these in the future
             forScope["wikibase-property"] = []; //I don't plan to display these (unless for debug)
             forScope["external-id"] = []; //I don't plan to display these (until and unless I stumble upon a useful one)
             //for individual-special values that won't end up as just a 'basic' row-li on card
@@ -622,6 +658,22 @@ app.directive('cardBody', function($q, $log, WD) {
             forScope.ind.aka = eachRawCard.aliases;
             
             forScope.sitelinks = eachRawCard.sitelinks;
+            
+            //a few items that we want to display as .sitelinks even though they come in as other types (like "wikibase-item")
+            var listOfLinkItems = [
+                    "P1151", //Portal:
+                    "P5125", //Outline of
+                    "P2184", //History of
+                    "P2633" // Geography of
+                ]
+            listOfLinkItems.forEach( eachItem => {
+                var itemValue = WD.data.getClaimValues(eachRawCard, eachItem);
+                if (itemValue[0]) {
+                    $log.debug("cardBody found itemValue: ", itemValue);
+                    var itemHref = "https://en.wikipedia.org/wiki/" + _.upperFirst(itemValue[0]);
+                    forScope.sitelinks.push( itemHref );
+                }
+            });
             
             var claimsToShow = WD.getClaimsToShow(eachRawCard.claims);
             //console.log("cardBody link() claimsToShow: ", claimsToShow);
