@@ -1,1 +1,1 @@
-Source code for [FlashyCards.net](http://www.flashycards.net/)
+Source code for former flashycards.net
