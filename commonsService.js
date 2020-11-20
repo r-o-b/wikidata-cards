@@ -81,7 +81,7 @@ commonsService.factory('CommonsService', function($log, $http) {
         $log.debug("factory.getImageFromTitle("+commonsTitle+") start");
         return $http({
             method: 'GET',
-            url: 'http://commons.wikimedia.org/w/api.php',
+            url: 'https://commons.wikimedia.org/w/api.php',
             params: {
                 origin: '*',
                 action: 'query',
