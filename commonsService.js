@@ -128,7 +128,7 @@ commonsService.factory('CommonsService', function($log, $http) {
         // $log.debug("factory.getImageFromFile() start with fileName == " + fileName);
         return $http({
             method: 'GET',
-            url: 'http://commons.wikimedia.org/w/api.php',
+            url: 'https://commons.wikimedia.org/w/api.php',
             params: {
                 origin: '*',
                 action: 'query',
@@ -174,7 +174,7 @@ commonsService.factory('CommonsService', function($log, $http) {
         var catName = incomingCatName.startsWith('Category:') ? incomingCatName.substring(9) : incomingCatName; //make sure does NOT included 'Category:' at start (because we'll add it later anyway)
         return $http({
             method: 'GET',
-            url: 'http://commons.wikimedia.org/w/api.php',
+            url: 'https://commons.wikimedia.org/w/api.php',
             params: {
                 origin: '*',
                 action: 'query',
